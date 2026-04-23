@@ -1,0 +1,2306 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>📊 帝國投資總部</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  :root {
+    --gold: #C9A84C;
+    --gold-light: #F0D080;
+    --gold-dark: #8B6914;
+    --bg: #0A0A0F;
+    --bg2: #12121A;
+    --bg3: #1A1A26;
+    --bg4: #22223A;
+    --text: #F0EAD6;
+    --text2: #A89870;
+    --text3: #6B5F40;
+    --border: rgba(201,168,76,0.2);
+    --border2: rgba(201,168,76,0.4);
+    --green: #4CAF72;
+    --red: #E05555;
+    --blue: #5B9BD5;
+    --radius: 12px;
+    --radius-sm: 8px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Noto Sans TC', -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 14px;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  /* TOP NAV */
+  .top-bar {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    padding: 0 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 52px;
+  }
+  .top-bar .logo {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--gold);
+    letter-spacing: 1px;
+  }
+  .top-bar-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+  }
+  .quick-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 10px;
+    border: 1px solid var(--border2);
+    border-radius: 999px;
+    color: var(--gold);
+    text-decoration: none;
+    font-size: 12px;
+    font-weight: 600;
+    background: var(--bg3);
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .quick-link:hover {
+    background: var(--bg4);
+    border-color: var(--gold);
+  }
+  .quick-link:active { transform: scale(0.98); }
+  .rate-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 4px 10px;
+    font-size: 12px;
+    color: var(--text2);
+  }
+  .rate-badge span { color: var(--gold); font-weight: 600; }
+
+  /* TAB NAV */
+  .tab-nav {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg);
+    overflow-x: auto;
+    scrollbar-width: none;
+    position: sticky;
+    top: 52px;
+    z-index: 99;
+  }
+  .tab-nav::-webkit-scrollbar { display: none; }
+  .tab-btn {
+    flex-shrink: 0;
+    padding: 12px 16px;
+    background: none;
+    border: none;
+    color: var(--text3);
+    font-size: 13px;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+    font-family: inherit;
+    white-space: nowrap;
+  }
+  .tab-btn.active {
+    color: var(--gold);
+    border-bottom-color: var(--gold);
+  }
+
+  /* PAGES */
+  .page { display: none; padding: 16px; padding-bottom: 32px; }
+  .page.active { display: block; }
+
+  /* SECTION */
+  .section {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+  .section-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--gold);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+  }
+
+  /* GRID STATS */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .stat-card {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 12px;
+  }
+  .stat-label { font-size: 11px; color: var(--text3); margin-bottom: 4px; }
+  .stat-value { font-size: 18px; font-weight: 700; color: var(--text); }
+  .stat-value.gold { color: var(--gold); }
+  .stat-value.green { color: var(--green); }
+  .stat-value.red { color: var(--red); }
+  .stat-sub { font-size: 11px; color: var(--text3); margin-top: 2px; }
+
+  /* FORM */
+  .form-row { margin-bottom: 12px; }
+  .form-label { font-size: 12px; color: var(--text2); margin-bottom: 6px; display: block; }
+  .form-input {
+    width: 100%;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 10px 12px;
+    color: var(--text);
+    font-size: 14px;
+    font-family: inherit;
+    outline: none;
+    transition: border-color 0.2s;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  .form-input:focus { border-color: var(--gold); }
+  .form-input option { background: var(--bg3); }
+
+  .btn {
+    width: 100%;
+    padding: 12px;
+    border-radius: var(--radius-sm);
+    border: none;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.2s;
+    letter-spacing: 0.5px;
+  }
+  .btn-gold {
+    background: var(--gold);
+    color: var(--bg);
+  }
+  .btn-gold:active { transform: scale(0.98); background: var(--gold-dark); }
+  .btn-outline {
+    background: transparent;
+    border: 1px solid var(--border2);
+    color: var(--gold);
+    margin-top: 8px;
+  }
+  .btn-outline:active { background: var(--bg3); }
+
+  .toggle-row {
+    display: flex;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 3px;
+    margin-bottom: 14px;
+    gap: 3px;
+  }
+  .toggle-btn {
+    flex: 1;
+    padding: 8px;
+    border: none;
+    border-radius: 6px;
+    background: none;
+    color: var(--text3);
+    font-size: 13px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.2s;
+  }
+  .toggle-btn.active {
+    background: var(--gold);
+    color: var(--bg);
+    font-weight: 600;
+  }
+
+  /* TOAST */
+  #toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: var(--bg4);
+    border: 1px solid var(--border2);
+    border-radius: 20px;
+    padding: 10px 20px;
+    font-size: 13px;
+    color: var(--gold);
+    z-index: 999;
+    transition: transform 0.3s;
+    white-space: nowrap;
+  }
+  #toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* PORTFOLIO TABLE */
+  .holding-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .holding-row:last-child { border-bottom: none; }
+  .holding-name { font-size: 13px; font-weight: 600; color: var(--text); }
+  .holding-meta { font-size: 11px; color: var(--text3); margin-top: 2px; }
+  .holding-right { text-align: right; }
+  .holding-value { font-size: 14px; font-weight: 600; }
+  .holding-roi { font-size: 11px; margin-top: 2px; }
+
+  .pledge-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .pledge-row:last-child { border-bottom: none; }
+  .pledge-name { font-size: 13px; font-weight: 600; color: var(--text); }
+  .pledge-meta { font-size: 11px; color: var(--text3); margin-top: 3px; line-height: 1.7; }
+  .pledge-right { text-align: right; min-width: 112px; }
+  .pledge-main { font-size: 15px; font-weight: 700; color: var(--gold); }
+  .pledge-sub { font-size: 11px; color: var(--text2); margin-top: 4px; }
+  .loan-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .loan-row:last-child { border-bottom: none; }
+
+  /* CALENDAR */
+  .cal-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 3px;
+    margin-top: 10px;
+  }
+  .cal-day-header {
+    text-align: center;
+    font-size: 10px;
+    color: var(--text3);
+    padding: 4px 0;
+  }
+  .cal-day {
+    aspect-ratio: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    font-size: 11px;
+    position: relative;
+    cursor: default;
+  }
+  .cal-day.has-dividend {
+    background: rgba(201,168,76,0.15);
+    border: 1px solid var(--border2);
+  }
+  .cal-day.has-dividend .cal-dot {
+    width: 4px;
+    height: 4px;
+    background: var(--gold);
+    border-radius: 50%;
+    margin-top: 2px;
+  }
+  .cal-day.empty { opacity: 0; pointer-events: none; }
+  .cal-day.today { background: var(--bg4); color: var(--gold); font-weight: 700; }
+
+  /* DIVIDEND LIST */
+  .div-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .div-item:last-child { border-bottom: none; }
+  .div-badge {
+    display: inline-block;
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    background: rgba(201,168,76,0.15);
+    color: var(--gold);
+    margin-top: 3px;
+  }
+
+  /* YIELD TABLE */
+  .yield-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .yield-row:last-child { border-bottom: none; }
+  .yoc-val { color: var(--green); font-weight: 600; font-size: 13px; }
+  .mkt-val { color: var(--blue); font-weight: 600; font-size: 13px; }
+
+  /* PAYBACK */
+  .payback-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .payback-row:last-child { border-bottom: none; }
+  .progress-bar {
+    height: 4px;
+    background: var(--bg4);
+    border-radius: 2px;
+    margin-top: 4px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: var(--gold);
+    border-radius: 2px;
+    transition: width 0.5s ease;
+  }
+
+  /* TAX TABLE */
+  .tax-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+  }
+  .tax-row:last-child { border-bottom: none; font-weight: 600; color: var(--gold); font-size: 14px; }
+
+  /* LOG */
+  .log-item {
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 12px;
+  }
+  .log-item:last-child { border-bottom: none; }
+  .log-type {
+    display: inline-block;
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    margin-bottom: 4px;
+  }
+  .log-type.buy { background: rgba(76,175,114,0.15); color: var(--green); }
+  .log-type.sell { background: rgba(224,85,85,0.15); color: var(--red); }
+  .log-type.div { background: rgba(201,168,76,0.15); color: var(--gold); }
+
+  .config-box {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 14px;
+    margin-bottom: 10px;
+  }
+  .config-label { font-size: 11px; color: var(--text3); margin-bottom: 6px; }
+  .config-val { font-size: 22px; font-weight: 700; color: var(--gold); margin-bottom: 2px; }
+
+  .chart-wrap { position: relative; width: 100%; height: 220px; margin-top: 12px; }
+  .chart-wrap-sm { position: relative; width: 100%; height: 180px; margin-top: 12px; }
+
+  input[type=date]::-webkit-calendar-picker-indicator {
+    filter: invert(0.7) sepia(1) saturate(2) hue-rotate(10deg);
+  }
+
+  .divider { height: 1px; background: var(--border); margin: 14px 0; }
+
+  .pill {
+    display: inline-block;
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: 600;
+  }
+  .pill-green { background: rgba(76,175,114,0.15); color: var(--green); }
+  .pill-red { background: rgba(224,85,85,0.15); color: var(--red); }
+  .pill-gold { background: rgba(201,168,76,0.15); color: var(--gold); }
+
+  .market-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 10px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .market-row:last-child { border-bottom: none; }
+  .market-name { font-size: 13px; font-weight: 700; color: var(--text); }
+  .market-meta { font-size: 11px; color: var(--text3); margin-top: 3px; line-height: 1.5; }
+  .market-price { font-size: 18px; font-weight: 800; color: var(--gold); text-align: right; }
+  .market-status { display:flex; justify-content:flex-end; gap:6px; flex-wrap:wrap; margin-top:5px; }
+
+  .empty-state { text-align: center; padding: 32px 16px; color: var(--text3); font-size: 13px; }
+
+  .api-setup {
+    background: rgba(201,168,76,0.08);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius-sm);
+    padding: 14px;
+    margin-bottom: 16px;
+  }
+  .api-setup p { font-size: 12px; color: var(--text2); margin-bottom: 8px; }
+</style>
+</head>
+<body>
+
+<!-- 登入遮罩 -->
+<div id="loginOverlay" style="position:fixed;top:0;left:0;width:100%;height:100%;background:var(--bg);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;">
+  <div style="font-size:28px;margin-bottom:8px;">⚔️</div>
+  <div style="font-size:18px;font-weight:700;color:var(--gold);margin-bottom:4px;">📊 帝國投資總部</div>
+  <div style="font-size:12px;color:var(--text3);margin-bottom:32px;">帝國投資總部 · 財富管理系統</div>
+  <input type="password" id="loginPasswordInput"
+    placeholder="請輸入密碼"
+    style="width:100%;max-width:280px;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:12px 16px;color:var(--text);font-size:16px;font-family:inherit;outline:none;text-align:center;margin-bottom:12px;"
+    onkeydown="if(event.key==='Enter')checkLogin()">
+  <button onclick="checkLogin()"
+    style="width:100%;max-width:280px;padding:12px;background:var(--gold);color:var(--bg);border:none;border-radius:var(--radius-sm);font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">
+    進入
+  </button>
+  <div id="loginError" style="color:var(--red);font-size:12px;margin-top:10px;min-height:18px;"></div>
+</div>
+
+<div id="toast"></div>
+
+<!-- TOP BAR -->
+<div class="top-bar">
+  <div class="top-bar-left">
+    <div class="logo">📊 帝國投資總部</div>
+    <a class="quick-link" href="https://artery526.github.io/wealth-dashboard/" target="_blank" rel="noopener noreferrer">📒 糧草大本營</a>
+  </div>
+  <div class="rate-badge">
+    USD/TWD <span id="rateDisplay">--</span>
+    <span style="color:var(--text3);font-size:10px;" id="rateTime"></span>
+  </div>
+</div>
+
+<!-- TAB NAV -->
+<div class="tab-nav">
+  <button class="tab-btn active" onclick="showTab('home')">🏛️ 首頁</button>
+  <button class="tab-btn" onclick="showTab('portfolio')">📊 持股總覽</button>
+  <button class="tab-btn" onclick="showTab('calendar')">📅 配息行事曆</button>
+  <button class="tab-btn" onclick="showTab('yield')">📈 年化殖利率</button>
+  <button class="tab-btn" onclick="showTab('payback')">⏳ 回本倒數</button>
+  <button class="tab-btn" onclick="showTab('pledge')">💳 質押信貸</button>
+  <button class="tab-btn" onclick="showTab('settings')">⚙️ 設定</button>
+</div>
+
+<!-- ===== PAGE: HOME ===== -->
+<div id="page-home" class="page active">
+
+  <!-- 總資產概覽 -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-label">總市值 (TWD)</div>
+      <div class="stat-value gold" id="totalValue">--</div>
+      <div class="stat-sub" id="totalValueUSD">USD --</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">總含息報酬</div>
+      <div class="stat-value" id="totalReturn">--</div>
+      <div class="stat-sub" id="totalROI">ROI --</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">月配息總計 (TWD)</div>
+      <div class="stat-value green" id="monthlyDiv">--</div>
+      <div class="stat-sub">年化 <span id="annualDiv">--</span></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">總投入成本</div>
+      <div class="stat-value" id="totalCost">--</div>
+      <div class="stat-sub">持倉數 <span id="holdingCount">--</span> 支</div>
+    </div>
+  </div>
+
+  <!-- 美股市場軍情 -->
+  <div class="section">
+    <div class="section-title">🇺🇸 美股市場軍情 <span id="marketUpdatedAt" style="color:var(--text3);font-weight:400;font-size:11px;"></span></div>
+    <div id="marketSignalList"></div>
+  </div>
+
+  <!-- 交易輸入 -->
+  <div class="section">
+    <div class="section-title">買賣交易</div>
+    <div class="toggle-row">
+      <button class="toggle-btn active" id="btnBuy" onclick="setTradeType('buy')">買入</button>
+      <button class="toggle-btn" id="btnSell" onclick="setTradeType('sell')">賣出</button>
+    </div>
+    <div class="form-row">
+      <label class="form-label">日期</label>
+      <input type="date" class="form-input" id="tradeDate">
+    </div>
+    <div class="form-row">
+      <label class="form-label">股票</label>
+      <select class="form-input" id="tradeSymbol">
+        <option value="">選擇股票...</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label class="form-label">股數</label>
+      <input type="number" class="form-input" id="tradeShares" placeholder="例：100">
+    </div>
+    <div class="form-row">
+      <label class="form-label">總金額 (TWD)</label>
+      <input type="number" class="form-input" id="tradeAmount" placeholder="例：100000">
+    </div>
+    <div class="form-row" id="tradePriceRow" style="display:none">
+      <label class="form-label">單價 (USD) — 自動估算</label>
+      <input type="number" class="form-input" id="tradePrice" placeholder="選填">
+    </div>
+    <button class="btn btn-gold" onclick="submitTrade()">確認送出</button>
+  </div>
+
+  <!-- 股息輸入 -->
+  <div class="section">
+    <div class="section-title">收息入帳</div>
+    <div class="form-row">
+      <label class="form-label">日期</label>
+      <input type="date" class="form-input" id="divDate">
+    </div>
+    <div class="form-row">
+      <label class="form-label">股票</label>
+      <select class="form-input" id="divSymbol" onchange="onDivSymbolChange()">
+        <option value="">選擇股票...</option>
+      </select>
+    </div>
+    <!-- 配息率快速試算（美股ETF用） -->
+    <div id="divRateCalcBox" style="display:none;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;margin-bottom:12px;">
+      <div style="font-size:11px;color:var(--gold);margin-bottom:8px;font-weight:600;">⚡ 配息率快速試算</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+        <div>
+          <label class="form-label" style="font-size:11px;">配息率</label>
+          <input type="number" class="form-input" id="divRateInput" placeholder="例：0.5008" step="0.0001" oninput="calcDivFromRate()">
+        </div>
+        <div>
+          <label class="form-label" style="font-size:11px;">扣稅比例</label>
+          <input type="number" class="form-input" id="divTaxPct" placeholder="0.7" step="0.0001" value="0.7" readonly>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+        <div>
+          <label class="form-label" style="font-size:11px;">退稅比例（30%中的比例）</label>
+          <input type="number" class="form-input" id="divRefundPct" placeholder="0.24" step="0.0001" value="0" oninput="calcDivFromRate()">
+        </div>
+        <div>
+          <label class="form-label" style="font-size:11px;">含稅收入 (TWD)</label>
+          <input type="number" class="form-input" id="divGrossAmount" placeholder="自動試算" readonly>
+        </div>
+      </div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:6px;" id="divRateFormula"></div>
+      <button class="btn btn-outline" style="padding:8px;font-size:12px;" onclick="applyRateCalc()">套用計算結果 →</button>
+    </div>
+    <div class="form-row">
+      <label class="form-label">稅後金額 (TWD)</label>
+      <input type="number" class="form-input" id="divAmount" placeholder="例：10000">
+    </div>
+    <div id="taxPreviewBox" style="display:none;background:var(--bg3);border-radius:var(--radius-sm);padding:10px 12px;margin-bottom:12px;font-size:12px;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div>
+          <div style="color:var(--text3);margin-bottom:4px;">稅後金額</div>
+          <div style="color:var(--gold);font-size:16px;font-weight:700;" id="taxPreviewVal">--</div>
+        </div>
+        <div>
+          <div style="color:var(--text3);margin-bottom:4px;">退稅金額</div>
+          <div style="color:var(--green);font-size:16px;font-weight:700;" id="refundPreviewVal">--</div>
+        </div>
+      </div>
+      <div style="color:var(--text3);font-size:11px;margin-top:6px;" id="taxPreviewRate"></div>
+    </div>
+    <button class="btn btn-gold" onclick="submitDividend()">確認送出</button>
+  </div>
+
+  <!-- ===== 戰力圖表區 ===== -->
+  <div class="section">
+    <div class="section-title">⚔️ 戰力圖表</div>
+    <!-- 切換Tab -->
+    <div class="toggle-row" style="margin-bottom:16px;">
+      <button class="toggle-btn active" id="wt0" onclick="switchWarChart(0)">ROI排名</button>
+      <button class="toggle-btn" id="wt1" onclick="switchWarChart(1)">月軍餉</button>
+      <button class="toggle-btn" id="wt2" onclick="switchWarChart(2)">含息報酬</button>
+      <button class="toggle-btn" id="wt3" onclick="switchWarChart(3)">兵力佔比</button>
+    </div>
+    <div class="chart-wrap" style="height:260px;">
+      <canvas id="warChart" role="img" aria-label="戰力圖表">戰力圖表</canvas>
+    </div>
+    <!-- 戰力排行榜 -->
+    <div id="warRankList" style="margin-top:14px;"></div>
+  </div>
+
+</div>
+
+<!-- ===== PAGE: PORTFOLIO ===== -->
+<div id="page-portfolio" class="page">
+  <div class="section">
+    <div class="section-title">持股軍團</div>
+    <div id="holdingList"></div>
+  </div>
+  <div class="section">
+    <div class="section-title">資產配置</div>
+    <div class="chart-wrap">
+      <canvas id="pieChart" role="img" aria-label="各持股佔比圓餅圖">持股比例</canvas>
+    </div>
+    <div id="pieLegend" style="margin-top:12px;display:flex;flex-wrap:wrap;gap:8px;"></div>
+  </div>
+  <div class="section">
+    <div class="section-title">月配息比較</div>
+    <div class="chart-wrap">
+      <canvas id="divBarChart" role="img" aria-label="各持股月配息柱狀圖">月配息比較</canvas>
+    </div>
+  </div>
+
+  </div><!-- end settingsContent -->
+</div>
+
+<!-- ===== PAGE: CALENDAR ===== -->
+<div id="page-calendar" class="page">
+  <div class="section">
+    <div class="section-title">本月預計配息</div>
+    <div id="thisMonthDivList"></div>
+  </div>
+  <div class="section">
+    <div class="section-title">下月預計配息</div>
+    <div id="nextMonthDivList"></div>
+  </div>
+  <div class="section">
+    <div class="section-title">配息日曆</div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+      <button onclick="calPrev()" style="background:none;border:1px solid var(--border);border-radius:6px;color:var(--text2);padding:4px 10px;cursor:pointer;font-family:inherit;">‹</button>
+      <span id="calTitle" style="font-size:13px;color:var(--text2);font-weight:600;"></span>
+      <button onclick="calNext()" style="background:none;border:1px solid var(--border);border-radius:6px;color:var(--text2);padding:4px 10px;cursor:pointer;font-family:inherit;">›</button>
+    </div>
+    <div class="cal-grid" id="calDayHeaders"></div>
+    <div class="cal-grid" id="calGrid"></div>
+    <div id="calTooltip" style="margin-top:12px;display:none;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:10px 12px;font-size:12px;"></div>
+  </div>
+</div>
+
+<!-- ===== PAGE: YIELD ===== -->
+<div id="page-yield" class="page">
+  <div class="section">
+    <div class="section-title">年化殖利率對照</div>
+    <div style="display:flex;gap:16px;margin-bottom:12px;font-size:11px;">
+      <span style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;border-radius:2px;background:var(--green);display:inline-block;"></span>Yield on Cost</span>
+      <span style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;border-radius:2px;background:var(--blue);display:inline-block;"></span>現價殖利率</span>
+    </div>
+    <div id="yieldList"></div>
+  </div>
+  <div class="section">
+    <div class="section-title">殖利率雷達</div>
+    <div class="chart-wrap">
+      <canvas id="yieldChart" role="img" aria-label="各持股年化殖利率比較柱狀圖">殖利率對照</canvas>
+    </div>
+  </div>
+</div>
+
+<!-- ===== PAGE: PAYBACK ===== -->
+<div id="page-payback" class="page">
+  <div class="section">
+    <div class="section-title">回本倒數計時器</div>
+    <div id="paybackList"></div>
+  </div>
+  <!-- 稅務年度彙整 -->
+  <div class="section">
+    <div class="section-title">稅務年度彙整 <span id="taxYear" style="color:var(--text3);font-weight:400;font-size:11px;"></span></div>
+    <div id="taxSummaryList"></div>
+    <div class="divider"></div>
+    <div class="tax-row">
+      <span>全年退稅合計</span>
+      <span id="totalTaxRefund">--</span>
+    </div>
+  </div>
+</div>
+
+<!-- ===== PAGE: PLEDGE ===== -->
+<div id="page-pledge" class="page">
+  <div class="section">
+    <div class="section-title">質押總覽</div>
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">質押總借款</div>
+        <div class="stat-value gold" id="pledgeTotalLoan">$ --</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">累積利息</div>
+        <div class="stat-value red" id="pledgeTotalInterest">$ --</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">平均最新維持率</div>
+        <div class="stat-value" id="pledgeAvgMaint">--</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">質押筆數</div>
+        <div class="stat-value" id="pledgeCount">--</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">平均利率</div>
+        <div class="stat-value" id="pledgeAvgRate">--</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">總質押張數</div>
+        <div class="stat-value" id="pledgeTotalLots">--</div>
+      </div>
+    </div>
+  </div>
+  <div class="section">
+    <div class="section-title">信貸總覽</div>
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">信貸總借款</div>
+        <div class="stat-value gold" id="loanTotalAmount">$ --</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">剩餘金額</div>
+        <div class="stat-value red" id="loanRemainingAmount">$ --</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">平均利率</div>
+        <div class="stat-value" id="loanAvgRate">--</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">每期還款總額</div>
+        <div class="stat-value" id="loanMonthlyPayment">$ --</div>
+      </div>
+    </div>
+  </div>
+  <div class="section">
+    <div class="section-title">質押明細</div>
+    <div id="pledgeList"></div>
+  </div>
+  <div class="section">
+    <div class="section-title">信貸明細</div>
+    <div id="loanList"></div>
+  </div>
+</div>
+
+<!-- ===== PAGE: SETTINGS ===== -->
+<div id="page-settings" class="page">
+  <!-- 密碼鎖 -->
+  <div id="settingsLock" style="text-align:center;padding:40px 16px;">
+    <div style="font-size:32px;margin-bottom:12px;">🔒</div>
+    <div style="font-size:14px;color:var(--text2);margin-bottom:16px;">請輸入設定密碼</div>
+    <input type="password" class="form-input" id="settingsPasswordInput"
+      placeholder="密碼" style="max-width:200px;margin:0 auto 12px;display:block;text-align:center;"
+      onkeydown="if(event.key==='Enter')checkSettingsPassword()">
+    <button class="btn btn-gold" style="max-width:200px;margin:0 auto;" onclick="checkSettingsPassword()">確認</button>
+    <div id="settingsPasswordError" style="color:var(--red);font-size:12px;margin-top:8px;"></div>
+  </div>
+  <!-- 設定內容（解鎖後顯示） -->
+  <div id="settingsContent" style="display:none;">
+  <div class="api-setup">
+    <p>🔑 請輸入您的 Google Sheets 資訊，設定後資料將儲存至雲端。</p>
+  </div>
+  <div class="section">
+    <div class="section-title">Google Sheets 設定</div>
+    <div class="form-row">
+      <label class="form-label">API Key</label>
+      <input type="text" class="form-input" id="settingApiKey" placeholder="AIza...">
+    </div>
+    <div class="form-row">
+      <label class="form-label">Spreadsheet ID</label>
+      <input type="text" class="form-input" id="settingSheetId" placeholder="12DwhG7u...">
+    </div>
+    <div class="form-row">
+      <label class="form-label">Apps Script Web App URL（用於寫入）</label>
+      <input type="text" class="form-input" id="settingScriptUrl" placeholder="https://script.google.com/macros/s/...">
+    </div>
+    <div class="form-row">
+      <label class="form-label">寫入密鑰 WRITE_TOKEN</label>
+      <input type="password" class="form-input" id="settingWriteToken" placeholder="例：a730526">
+    </div>
+    <button class="btn btn-gold" onclick="saveSettings()">儲存設定</button>
+    <button class="btn btn-outline" onclick="loadFromSheets()">從 Sheets 讀取資料</button>
+    <button class="btn btn-outline" style="margin-top:8px;color:var(--green);border-color:rgba(76,175,114,0.4);" onclick="syncPricesOnly()">📡 同步最新現價</button>
+    <button class="btn btn-outline" style="margin-top:8px;color:var(--blue);border-color:rgba(91,155,213,0.4);" onclick="takeManualSnapshot()">📸 立即快照市值</button>
+    <button class="btn btn-outline" style="margin-top:8px;color:var(--text3);" onclick="clearLocalData()">清除本地快取</button>
+  </div>
+  <div class="section">
+    <div class="section-title">更新現價</div>
+    <div style="font-size:12px;color:var(--text3);margin-bottom:12px;">輸入最新股價後點「儲存現價」，市值與殖利率全部自動重算。美股填 USD，台股/基金填 TWD。</div>
+    <div id="priceUpdateList"></div>
+    <button class="btn btn-gold" style="margin-top:14px;" onclick="savePrices()">儲存現價</button>
+  </div>
+  <div class="section">
+    <div class="section-title">操作記錄</div>
+    <div id="logList"></div>
+  </div>
+  <div class="section">
+    <div class="section-title">Apps Script 部署說明</div>
+    <div style="font-size:12px;color:var(--text2);line-height:1.8;">
+      <p style="margin-bottom:8px;">1. 打開您的 Google Sheets → 點選「擴充功能」→「Apps Script」</p>
+      <p style="margin-bottom:8px;">2. 貼上軍師提供的 Apps Script 程式碼</p>
+      <p style="margin-bottom:8px;">3. 點選「部署」→「新增部署作業」→ 類型選「網路應用程式」</p>
+      <p style="margin-bottom:8px;">4. 執行身分選「我」，存取權選「所有人」</p>
+      <p style="margin-bottom:8px;">5. 點「部署」後複製 Web App URL 貼入上方欄位</p>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============ DATA ============
+const SHEET_ID = '12DwhG7ufemtb3RQ3xf3UXw8Xg3LmeqBgOo3KZAnLO4M';
+
+// 預設持股資料（從財富管理公司.xlsx 讀取的資料）
+const DEFAULT_STOCKS = [
+  { symbol: 'QQQI',  name: 'QQQI ETF',   shares: 750,  cost: 1194813, price: 53.89,  monthlyDiv: 10055.598,  refundRate: 0.9959, cycle: 'monthly',  emoji: '📡' },
+  { symbol: 'AIPI',  name: 'AIPI ETF',   shares: 1200, cost: 1933685, price: 36.01,  monthlyDiv: 26991.342,  refundRate: 1.0,    cycle: 'monthly',  emoji: '🤖' },
+  { symbol: 'CHPY',  name: 'CHPY ETF',   shares: 500,  cost: 870351,  price: 64.27,  monthlyDiv: 16715.2265, refundRate: 0.24,   cycle: 'weekly',   emoji: '🐦‍🔥' },
+  { symbol: 'PLTY',  name: 'PLTY ETF',   shares: 700,  cost: 1169750, price: 37.17,  monthlyDiv: 22166.4191, refundRate: 0.006,  cycle: 'weekly',   emoji: '🪖' },
+  { symbol: 'SPYI',  name: 'SPYI ETF',   shares: 200,  cost: 300927,  price: 52.55,  monthlyDiv: 2337.4855,  refundRate: 0.9527, cycle: 'monthly',  emoji: '💎' },
+  { symbol: 'MLPI',  name: 'MLPI ETF',   shares: 500,  cost: 851150,  price: 54.72,  monthlyDiv: 7277.0775,  refundRate: 0.0,    cycle: 'monthly',  emoji: '🛢️' },
+  { symbol: 'IAU',   name: 'IAU ETF',    shares: 275,  cost: 643339,  price: 91.34,  monthlyDiv: 0,          refundRate: 0.0,    cycle: 'none',     emoji: '💛' },
+  { symbol: '00985B',name: '群益00985B', shares: 315000, cost: 3187000, price: 10.23, monthlyDiv: 15110,    refundRate: 0.0,    cycle: 'monthly',  emoji: '🎟️', isTWD: true },
+  { symbol: '路博邁5G', name: '路博邁台灣5G', shares: 16585.59, cost: 621000, price: 54.83, monthlyDiv: 2156.126, refundRate: 0.0, cycle: 'monthly', emoji: '🐉', isTWD: true },
+  { symbol: '施羅德', name: '施羅德收益成長', shares: 150.14, cost: 648000, price: 140.1944, monthlyDiv: 5283.17, refundRate: 0.0, cycle: 'monthly', emoji: '🪄', isTWD: false },
+];
+
+let state = {
+  stocks: [],
+  rate: 31.5025,
+  tradeType: 'buy',
+  calYear: new Date().getFullYear(),
+  calMonth: new Date().getMonth(),
+  logs: [],
+  snapshots: [],
+  dividendHistory: [],
+  pledges: [],
+  loans: [],
+  marketSignals: [],
+  apiKey: '',
+  sheetId: SHEET_ID,
+  scriptUrl: '',
+  writeToken: '',
+};
+
+// ============ INIT ============
+function init() {
+  const saved = localStorage.getItem('wm_state');
+  if (saved) {
+    try {
+      const parsed = JSON.parse(saved);
+      state = { ...state, ...parsed };
+    } catch(e) {}
+  }
+  if (!state.stocks || state.stocks.length === 0) {
+    state.stocks = JSON.parse(JSON.stringify(DEFAULT_STOCKS));
+  }
+
+  // restore settings inputs
+  document.getElementById('settingApiKey').value = state.apiKey || '';
+  document.getElementById('settingSheetId').value = state.sheetId || SHEET_ID;
+  document.getElementById('settingScriptUrl').value  = state.scriptUrl  || '';
+  document.getElementById('settingWriteToken').value = state.writeToken || '';
+
+  // Set today's date on inputs
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('tradeDate').value = today;
+  document.getElementById('divDate').value = today;
+  populateSelects();
+  fetchRate();
+  if (state.scriptUrl) syncPricesOnly();
+  renderAll();
+}
+
+function saveState() {
+  localStorage.setItem('wm_state', JSON.stringify(state));
+}
+
+// ============ POPULATE SELECTS ============
+function populateSelects() {
+  const selects = ['tradeSymbol', 'divSymbol'];
+  selects.forEach(id => {
+    const el = document.getElementById(id);
+    const cur = el.value;
+    el.innerHTML = '<option value="">選擇股票...</option>';
+    state.stocks.forEach(s => {
+      const opt = document.createElement('option');
+      opt.value = s.symbol;
+      opt.textContent = `${s.emoji} ${s.name}`;
+      el.appendChild(opt);
+    });
+    if (cur) el.value = cur;
+  });
+}
+
+// ============ RATE ============
+async function fetchRate() {
+  try {
+    const res = await fetch(`https://api.exchangerate-api.com/v4/latest/USD`);
+    const data = await res.json();
+    if (data.rates && data.rates.TWD) {
+      state.rate = data.rates.TWD;
+      document.getElementById('rateDisplay').textContent = state.rate.toFixed(2);
+      document.getElementById('rateTime').textContent = '即時';
+      saveState();
+      renderHome();
+    }
+  } catch(e) {
+    document.getElementById('rateDisplay').textContent = state.rate.toFixed(2);
+    document.getElementById('rateTime').textContent = '快取';
+  }
+}
+
+// ============ TAB ============
+function showTab(tab) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + tab).classList.add('active');
+  event.currentTarget.classList.add('active');
+  renderPage(tab);
+}
+
+function renderPage(tab) {
+  if (tab === 'home') renderHome();
+  else if (tab === 'portfolio') renderPortfolio();
+  else if (tab === 'calendar') renderCalendar();
+  else if (tab === 'yield') renderYield();
+  else if (tab === 'payback') renderPayback();
+  else if (tab === 'pledge') renderPledge();
+  else if (tab === 'settings') { lockSettings(); renderLog(); renderPriceList(); }
+}
+
+function renderAll() {
+  renderHome();
+  renderPortfolio();
+  renderCalendar();
+  renderYield();
+  renderPayback();
+  renderPledge();
+  renderLog(); renderPriceList();
+}
+
+// ============ HELPERS ============
+function getStockMarketValueTWD(s) {
+  if (s.isTWD) return s.price * s.shares;
+  return s.price * s.shares * state.rate;
+}
+
+function fmt(n) {
+  if (n === undefined || n === null || isNaN(n)) return '--';
+  return Math.round(n).toLocaleString();
+}
+
+function fmtPct(n) {
+  if (isNaN(n)) return '--';
+  return (n * 100).toFixed(1) + '%';
+}
+
+function normalizeSymbolKey(value) {
+  return String(value || '').replace(/[^\w\u4e00-\u9fff]/g, '').trim();
+}
+
+function symbolAliases(stock) {
+  const aliases = new Set([
+    stock.symbol,
+    stock.name,
+    normalizeSymbolKey(stock.symbol),
+    normalizeSymbolKey(stock.name),
+  ]);
+
+  if (stock.symbol === '路博邁5G' || stock.name.includes('路博邁')) {
+    aliases.add('路博邁台灣5G');
+    aliases.add('路博邁5G');
+  }
+  if (stock.symbol === '施羅德' || stock.name.includes('施羅德')) {
+    aliases.add('施羅德收益成長');
+    aliases.add('施羅德收益成長A2');
+    aliases.add('施羅德');
+  }
+
+  return Array.from(aliases).filter(Boolean);
+}
+
+function getReceivedDividends(stock) {
+  const aliases = symbolAliases(stock);
+  const normalizedAliases = new Set(aliases.map(normalizeSymbolKey));
+
+  if (state.cumulativeDivs) {
+    for (const [key, value] of Object.entries(state.cumulativeDivs)) {
+      if (normalizedAliases.has(normalizeSymbolKey(key)) && Number(value) > 0) {
+        return Number(value) || 0;
+      }
+    }
+  }
+
+  return (state.dividendHistory || [])
+    .filter(d => normalizedAliases.has(normalizeSymbolKey(d.symbol)) && (!d.type || d.type === 'dividend'))
+    .reduce((sum, d) => sum + d.amount, 0);
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ============ HOME ============
+function renderHome() {
+  let totalVal = 0, totalCost = 0, totalDiv = 0, totalReturn = 0;
+  state.stocks.forEach(s => {
+    const mv = getStockMarketValueTWD(s);
+    totalVal += mv;
+    totalCost += s.cost;
+    totalDiv += s.monthlyDiv;
+  });
+  totalReturn = totalVal - totalCost;
+
+  // 優先使用 Sheets L20 的含息總報酬（更準確，含累計配息）
+  const displayReturn = state.sheetsTotalReturn || totalReturn;
+  const displayMarketVal = state.sheetsTotalMarketVal || totalVal;
+
+  document.getElementById('totalValue').textContent = '$ ' + fmt(displayMarketVal);
+  document.getElementById('totalValueUSD').textContent = 'USD ' + fmt(displayMarketVal / state.rate);
+  document.getElementById('totalReturn').textContent = (displayReturn >= 0 ? '+' : '') + '$ ' + fmt(displayReturn);
+  document.getElementById('totalReturn').className = 'stat-value ' + (displayReturn >= 0 ? 'green' : 'red');
+  document.getElementById('totalROI').textContent = 'ROI ' + fmtPct(displayReturn / totalCost);
+  document.getElementById('monthlyDiv').textContent = '$ ' + fmt(totalDiv);
+  document.getElementById('annualDiv').textContent = '$ ' + fmt(totalDiv * 12);
+  document.getElementById('totalCost').textContent = '$ ' + fmt(totalCost);
+  document.getElementById('holdingCount').textContent = state.stocks.length;
+
+  renderWarChart();
+  renderMarketSignals();
+}
+
+function getSignalPillClass(signal) {
+  if (signal === '進攻' || signal === '正常') return 'pill-green';
+  if (signal === '防守' || signal === '警戒') return 'pill-red';
+  return 'pill-gold';
+}
+
+function formatMarketNumber(value) {
+  const num = Number(value);
+  if (!num) return '--';
+  return num.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function renderMarketSignals() {
+  const list = document.getElementById('marketSignalList');
+  if (!list) return;
+
+  const signals = state.marketSignals || [];
+  if (signals.length === 0) {
+    document.getElementById('marketUpdatedAt').textContent = '';
+    list.innerHTML = '<div class="empty-state">尚未同步市場軍情，請先從 Sheets 讀取資料</div>';
+    return;
+  }
+
+  const updatedAt = signals.find(s => s.updatedAt)?.updatedAt || '';
+  document.getElementById('marketUpdatedAt').textContent = updatedAt ? `更新 ${updatedAt}` : '';
+
+  list.innerHTML = signals.map(s => {
+    const change = s.previous ? ((s.price - s.previous) / s.previous) : 0;
+    const changeText = s.previous ? `${change >= 0 ? '+' : ''}${(change * 100).toFixed(2)}%` : '--';
+    const changeColor = change >= 0 ? 'var(--green)' : 'var(--red)';
+    const maText = s.ma20 ? `20MA ${formatMarketNumber(s.ma20)} · ${s.direction || '--'}` : (s.direction || '--');
+    const signal = s.signal || '觀望';
+
+    return `<div class="market-row">
+      <div>
+        <div class="market-name">${s.name}</div>
+        <div class="market-meta">${s.code}</div>
+        <div class="market-meta">${maText}</div>
+      </div>
+      <div>
+        <div class="market-price">${formatMarketNumber(s.price)}</div>
+        <div style="font-size:11px;color:${changeColor};text-align:right;">${changeText}</div>
+        <div class="market-status">
+          <span class="pill ${getSignalPillClass(signal)}">${signal}</span>
+          <span class="pill pill-gold">${s.status || '--'}</span>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderTaxSummary() {
+  const year = new Date().getFullYear();
+  document.getElementById('taxYear').textContent = year + ' 年度';
+  const list = document.getElementById('taxSummaryList');
+  let total = 0;
+
+  // Summarize from dividendHistory
+  const byStock = {};
+  (state.dividendHistory || []).filter(d => {
+    const y = new Date(d.date).getFullYear();
+    return y === year && d.taxRefund > 0;
+  }).forEach(d => {
+    if (!byStock[d.symbol]) byStock[d.symbol] = 0;
+    byStock[d.symbol] += d.taxRefund;
+  });
+
+  if (Object.keys(byStock).length === 0) {
+    list.innerHTML = '<div class="empty-state">本年度尚無退稅記錄</div>';
+    document.getElementById('totalTaxRefund').textContent = '$ 0';
+    return;
+  }
+
+  list.innerHTML = Object.entries(byStock).map(([sym, amt]) => {
+    total += amt;
+    return `<div class="tax-row"><span>${sym}</span><span style="color:var(--green);">+$ ${fmt(amt)}</span></div>`;
+  }).join('');
+  document.getElementById('totalTaxRefund').textContent = '$ ' + fmt(total);
+}
+
+// ============ TRADE ============
+function setTradeType(type) {
+  state.tradeType = type;
+  document.getElementById('btnBuy').classList.toggle('active', type === 'buy');
+  document.getElementById('btnSell').classList.toggle('active', type === 'sell');
+}
+
+function submitTrade() {
+  const date = document.getElementById('tradeDate').value;
+  const symbol = document.getElementById('tradeSymbol').value;
+  const shares = parseFloat(document.getElementById('tradeShares').value);
+  const amount = parseFloat(document.getElementById('tradeAmount').value);
+
+  if (!date || !symbol || isNaN(shares) || isNaN(amount)) {
+    showToast('⚠️ 請填寫完整資料');
+    return;
+  }
+
+  const stock = state.stocks.find(s => s.symbol === symbol);
+  if (!stock) return;
+
+  const isBuy = state.tradeType === 'buy';
+
+  if (isBuy) {
+    const newTotalCost = stock.cost + amount;
+    const newShares = stock.shares + shares;
+    stock.cost = newTotalCost;
+    stock.shares = newShares;
+  } else {
+    const costPerShare = stock.cost / stock.shares;
+    stock.cost -= costPerShare * shares;
+    stock.shares -= shares;
+    if (stock.shares < 0) stock.shares = 0;
+    if (stock.cost < 0) stock.cost = 0;
+  }
+
+  // Snapshot
+  const totalVal = state.stocks.reduce((sum, s) => sum + getStockMarketValueTWD(s), 0);
+  state.snapshots = state.snapshots || [];
+  state.snapshots.push({ date: date, value: totalVal });
+  if (state.snapshots.length > 60) state.snapshots = state.snapshots.slice(-60);
+
+  state.logs = state.logs || [];
+  state.logs.unshift({
+    type: isBuy ? 'buy' : 'sell',
+    date, symbol, shares, amount,
+    label: `${isBuy ? '買入' : '賣出'} ${symbol} ${shares}股 $${fmt(amount)}`
+  });
+
+  // 賣出時股數和金額記負數
+  const tradeShares = isBuy ? shares : -Math.abs(shares);
+  const tradeAmount = isBuy ? amount : -Math.abs(amount);
+
+  saveState();
+  showToast('🔄 寫入雲端中...');
+  writeToSheets({ action: 'trade', type: state.tradeType, date, symbol, shares: tradeShares, amount: tradeAmount })
+    .then(res => {
+      if (res && res.ok) showToast(`✅ ${isBuy ? '買入' : '賣出'}已記錄並同步至 Sheets`);
+      else showToast(`✅ ${isBuy ? '買入' : '賣出'}已記錄（本地）`);
+    });
+  renderAll();
+}
+
+// ============ DIVIDEND ============
+document.getElementById('divSymbol').addEventListener('change', updateTaxPreview);
+
+function onDivSymbolChange() {
+  updateTaxPreview();
+  const symbol = document.getElementById('divSymbol').value;
+  const stock = state.stocks.find(s => s.symbol === symbol);
+  // 只有美股 ETF（非 isTWD）才顯示配息率試算
+  const box = document.getElementById('divRateCalcBox');
+  if (stock && !stock.isTWD) {
+    box.style.display = 'block';
+    document.getElementById('divRefundPct').value = formatRateInput(stock.refundRate || 0);
+    calcDivFromRate();
+  } else {
+    box.style.display = 'none';
+    document.getElementById('divRateFormula').textContent = '';
+    document.getElementById('divGrossAmount').value = '';
+    document.getElementById('divRefundPct').value = '0';
+    updateTaxPreview();
+  }
+}
+
+function formatRateInput(value) {
+  return Number(value || 0).toFixed(4).replace(/0+$/, '').replace(/\.$/, '') || '0';
+}
+
+function calcDivFromRate() {
+  const symbol = document.getElementById('divSymbol').value;
+  const rate   = parseFloat(document.getElementById('divRateInput').value);
+  const taxPct = 0.7;
+  const refundPct = parseFloat(document.getElementById('divRefundPct').value) || 0;
+  const stock  = state.stocks.find(s => s.symbol === symbol);
+  if (!stock || isNaN(rate) || rate <= 0) {
+    document.getElementById('divRateFormula').textContent = '';
+    document.getElementById('divGrossAmount').value = '';
+    return;
+  }
+  const gross = rate * stock.shares * state.rate;
+  const net = gross * taxPct;
+  const refund = gross * 0.3 * refundPct;
+  document.getElementById('divRateFormula').innerHTML =
+    `含稅收入 ${rate} × ${stock.shares}股 × ${state.rate.toFixed(2)} = <strong style="color:var(--gold);">$${fmt(gross)}</strong><br>` +
+    `稅後金額 $${fmt(gross)} × 0.7 = <strong style="color:var(--gold);">$${fmt(net)}</strong><br>` +
+    `退稅金額 $${fmt(gross)} × 0.3 × ${refundPct} = <strong style="color:var(--green);">$${fmt(refund)}</strong>`;
+  return { gross, net, refund };
+}
+
+function applyRateCalc() {
+  const result = calcDivFromRate();
+  if (!result || isNaN(result.net)) { showToast('⚠️ 請先輸入配息率'); return; }
+  document.getElementById('divGrossAmount').value = Math.round(result.gross);
+  document.getElementById('divAmount').value = Math.round(result.net);
+  updateTaxPreview();
+  showToast('✅ 已套用計算結果');
+}
+document.getElementById('divAmount').addEventListener('input', updateTaxPreview);
+document.getElementById('divRefundPct').addEventListener('input', updateTaxPreview);
+
+function updateTaxPreview() {
+  const symbol = document.getElementById('divSymbol').value;
+  const amount = parseFloat(document.getElementById('divAmount').value);
+  const refundPct = parseFloat(document.getElementById('divRefundPct').value) || 0;
+  const box = document.getElementById('taxPreviewBox');
+
+  if (symbol && !isNaN(amount) && amount > 0) {
+    const gross = parseFloat(document.getElementById('divGrossAmount').value);
+    const grossBase = !isNaN(gross) && gross > 0 ? gross : (amount / 0.7);
+    const refund = grossBase * 0.3 * refundPct;
+    document.getElementById('taxPreviewVal').textContent = '$ ' + fmt(amount);
+    document.getElementById('refundPreviewVal').textContent = '$ ' + fmt(refund);
+    document.getElementById('taxPreviewRate').textContent = `扣稅固定 70%，退稅比例 ${fmtPct(refundPct)}，退稅金額依 30% 稅額部分計算`;
+    box.style.display = 'block';
+    return;
+  }
+  box.style.display = 'none';
+}
+
+function submitDividend() {
+  const date = document.getElementById('divDate').value;
+  const symbol = document.getElementById('divSymbol').value;
+  const amount = parseFloat(document.getElementById('divAmount').value);
+  const divRate = parseFloat(document.getElementById('divRateInput')?.value) || 0;
+  const taxRate = 0.7;
+  const refundRate = parseFloat(document.getElementById('divRefundPct')?.value) || 0;
+  const grossAmount = parseFloat(document.getElementById('divGrossAmount')?.value) || (amount / 0.7);
+  const taxRefund = grossAmount * 0.3 * refundRate;
+
+  if (!date || !symbol || isNaN(amount)) {
+    showToast('⚠️ 請填寫完整資料');
+    return;
+  }
+
+  state.dividendHistory = state.dividendHistory || [];
+  state.dividendHistory.push({ date, symbol, amount, type: 'dividend', taxRefund, divRate, taxRate, refundRate, grossAmount });
+
+  state.logs = state.logs || [];
+  state.logs.unshift({
+    type: 'div',
+    date, symbol, amount,
+    label: `配息 ${symbol} 稅後$${fmt(amount)}` + (taxRefund > 0 ? ` 退稅+$${fmt(taxRefund)}` : '')
+  });
+
+  // Snapshot market value
+  const totalVal = state.stocks.reduce((sum, s) => sum + getStockMarketValueTWD(s), 0);
+  state.snapshots = state.snapshots || [];
+  state.snapshots.push({ date, value: totalVal });
+
+  saveState();
+  showToast('🔄 寫入雲端中...');
+  writeToSheets({ action: 'dividend', date, symbol, amount, taxRefund, divRate, taxRate, refundRate, grossAmount })
+    .then(res => {
+      if (res && res.ok) showToast('✅ 配息已記錄並同步至 Sheets');
+      else showToast('✅ 配息已記錄（本地）');
+    });
+
+  document.getElementById('divAmount').value = '';
+  document.getElementById('divGrossAmount').value = '';
+  updateTaxPreview();
+  renderAll();
+}
+
+// ============ PORTFOLIO ============
+const CHART_COLORS = ['#C9A84C','#4CAF72','#5B9BD5','#E05555','#9B6DFF','#FF8C42','#00C9A7','#FFD166','#EF476F','#06D6A0'];
+
+function renderPortfolio() {
+  const list = document.getElementById('holdingList');
+  list.innerHTML = state.stocks.map(s => {
+    const mv = getStockMarketValueTWD(s);
+    const priceRoi = (mv - s.cost) / s.cost;
+    const isPricePos = mv >= s.cost;
+    const unit = s.isTWD ? 'TWD' : 'USD';
+    const avgPrice = Number(s.avgCost) > 0
+      ? Number(s.avgCost)
+      : (s.shares > 0
+          ? (s.isTWD ? (s.cost / s.shares) : (s.cost / s.shares / state.rate))
+          : 0);
+    const hasPriceCompare = avgPrice > 0 && Number(s.price) > 0;
+    const isAboveAvg = hasPriceCompare && Number(s.price) >= avgPrice;
+    const compareColor = hasPriceCompare
+      ? (isAboveAvg ? 'var(--green)' : 'var(--red)')
+      : 'var(--text2)';
+
+    // 優先顯示試算表 J 欄「含息總報酬(TWD)」，沒有時才退回前端估算
+    const cumDiv = (state.cumulativeDivs && state.cumulativeDivs[s.symbol]) || 0;
+    const fallbackTotalRet = (mv - s.cost) + cumDiv;
+    const hasSheetTotalRet = typeof s.totalReturn === 'number' && !isNaN(s.totalReturn);
+    const totalRet = hasSheetTotalRet ? s.totalReturn : fallbackTotalRet;
+    const totalRoi = s.cost > 0 ? (totalRet / s.cost) : 0;
+    const isTotalPos = totalRet >= 0;
+
+    return `
+      <div class="holding-row">
+        <div>
+          <div class="holding-name">${s.emoji} ${s.name}</div>
+          <div class="holding-meta">${s.shares.toLocaleString()}股 · 投入成本 $${fmt(s.cost)}</div>
+        </div>
+        <div class="holding-right">
+          <div class="holding-value" style="color:${isTotalPos ? 'var(--gold)' : 'var(--red)'}">${isTotalPos ? '+' : ''}$${fmt(totalRet)}</div>
+          <div class="holding-roi" style="color:${isTotalPos ? 'var(--gold)' : 'var(--red)'}">${isTotalPos ? '+' : ''}${fmtPct(totalRoi)}</div>
+          <div style="font-size:11px;margin-top:3px;color:${compareColor};">現價 ${s.price ? Number(s.price).toFixed(2) : '--'} / 均價 ${avgPrice ? avgPrice.toFixed(2) : '--'} ${unit}</div>
+          <div style="font-size:11px;margin-top:3px;color:${isPricePos ? 'var(--green)' : 'var(--red)'};">
+            現值 $${fmt(mv)} (${isPricePos ? '+' : ''}${fmtPct(priceRoi)})
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+
+  renderPieChart();
+  renderDivBarChart();
+}
+
+function renderPieChart() {
+  const data = state.stocks.map(s => getStockMarketValueTWD(s));
+  const labels = state.stocks.map(s => s.symbol);
+  const total = data.reduce((a, b) => a + b, 0);
+
+  const canvas = document.getElementById('pieChart');
+  if (canvas._chart) canvas._chart.destroy();
+  const ctx = canvas.getContext('2d');
+  canvas._chart = new Chart(ctx, {
+    type: 'doughnut',
+    data: { labels, datasets: [{ data, backgroundColor: CHART_COLORS, borderWidth: 1, borderColor: '#12121A' }] },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      cutout: '60%',
+    }
+  });
+
+  const legend = document.getElementById('pieLegend');
+  legend.innerHTML = state.stocks.map((s, i) => {
+    const pct = (getStockMarketValueTWD(s) / total * 100).toFixed(1);
+    return `<span style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--text2);">
+      <span style="width:10px;height:10px;border-radius:2px;background:${CHART_COLORS[i % CHART_COLORS.length]};flex-shrink:0;"></span>
+      ${s.symbol} ${pct}%</span>`;
+  }).join('');
+}
+
+function renderDivBarChart() {
+  const filtered = state.stocks.filter(s => s.monthlyDiv > 0);
+  const canvas = document.getElementById('divBarChart');
+  if (canvas._chart) canvas._chart.destroy();
+  const ctx = canvas.getContext('2d');
+  canvas._chart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: filtered.map(s => s.symbol),
+      datasets: [{
+        label: '月配息 (TWD)',
+        data: filtered.map(s => Math.round(s.monthlyDiv)),
+        backgroundColor: CHART_COLORS,
+        borderRadius: 4,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { color: '#6B5F40', font: { size: 10 }, maxRotation: 45, autoSkip: false }, grid: { color: 'rgba(201,168,76,0.08)' } },
+        y: { ticks: { color: '#6B5F40', font: { size: 10 }, callback: v => '$' + Math.round(v/1000) + 'K' }, grid: { color: 'rgba(201,168,76,0.08)' } }
+      }
+    }
+  });
+}
+
+// ============ WAR CHART 戰力圖表 ============
+let currentWarChart = 0;
+
+const WAR_MODES = [
+  {
+    key: 'roi',
+    label: 'ROI 軍功排名',
+    getValue: s => {
+      // 優先用持股總覽的 ROI%（已含含息）
+      if (s.roi !== undefined && s.roi !== 0) return s.roi;
+      return (getStockMarketValueTWD(s) - s.cost) / s.cost * 100;
+    },
+    format: v => (v >= 0 ? '+' : '') + v.toFixed(1) + '%',
+    yFormat: v => v.toFixed(0) + '%',
+    color: v => v >= 0 ? 'rgba(76,175,114,0.8)' : 'rgba(224,85,85,0.8)',
+    rankLabel: (s, v) => v.toFixed(1) + '%',
+  },
+  {
+    key: 'div',
+    label: '月軍餉排名',
+    getValue: s => s.monthlyDiv || 0,
+    format: v => '$' + Math.round(v).toLocaleString(),
+    yFormat: v => '$' + Math.round(v/1000) + 'K',
+    color: () => 'rgba(201,168,76,0.8)',
+    rankLabel: (s, v) => '$' + Math.round(v).toLocaleString(),
+  },
+  {
+    key: 'return',
+    label: '含息總報酬排名',
+    getValue: s => {
+      // 優先用持股總覽的含息總報酬
+      if (s.totalReturn !== undefined && s.totalReturn !== 0) return s.totalReturn;
+      const cumDiv = (state.cumulativeDivs && state.cumulativeDivs[s.symbol]) || 0;
+      return (getStockMarketValueTWD(s) - s.cost) + cumDiv;
+    },
+    format: v => (v >= 0 ? '+$' : '-$') + Math.abs(Math.round(v)).toLocaleString(),
+    yFormat: v => (v >= 0 ? '' : '-') + '$' + Math.abs(Math.round(v/10000)) + 'W',
+    color: v => v >= 0 ? 'rgba(76,175,114,0.8)' : 'rgba(224,85,85,0.8)',
+    rankLabel: (s, v) => (v >= 0 ? '+' : '') + '$' + Math.round(v).toLocaleString(),
+  },
+  {
+    key: 'alloc',
+    label: '兵力投入佔比',
+    getValue: s => s.cost,
+    format: v => '$' + Math.round(v).toLocaleString(),
+    yFormat: v => '$' + Math.round(v/10000) + 'W',
+    color: (_, i) => CHART_COLORS[i % CHART_COLORS.length],
+    rankLabel: (s, v) => {
+      const total = state.stocks.reduce((sum, x) => sum + x.cost, 0);
+      return (v / total * 100).toFixed(1) + '%';
+    },
+  },
+];
+
+function switchWarChart(idx) {
+  currentWarChart = idx;
+  [0,1,2,3].forEach(i => {
+    document.getElementById('wt' + i)?.classList.toggle('active', i === idx);
+  });
+  renderWarChart();
+}
+
+function renderWarChart() {
+  const mode = WAR_MODES[currentWarChart];
+  const canvas = document.getElementById('warChart');
+  if (!canvas) return;
+
+  // 計算並排序
+  const data = state.stocks.map((s, i) => ({
+    symbol: s.symbol, emoji: s.emoji, stock: s, idx: i,
+    value: mode.getValue(s),
+  })).sort((a, b) => b.value - a.value);
+
+  if (canvas._chart) canvas._chart.destroy();
+  const ctx = canvas.getContext('2d');
+
+  canvas._chart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: data.map(d => d.symbol),
+      datasets: [{
+        data: data.map(d => d.value),
+        backgroundColor: data.map((d, i) =>
+          typeof mode.color === 'function' ? mode.color(d.value, i) : mode.color
+        ),
+        borderRadius: 5,
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: {
+          ticks: { color: '#6B5F40', font: { size: 9 }, callback: v => mode.yFormat(v) },
+          grid: { color: 'rgba(201,168,76,0.08)' }
+        },
+        y: {
+          ticks: { color: '#A89870', font: { size: 11 }, autoSkip: false },
+          grid: { color: 'rgba(201,168,76,0.05)' }
+        }
+      }
+    }
+  });
+
+  // 渲染排行榜
+  renderWarRank(data, mode);
+}
+
+function renderWarRank(data, mode) {
+  const el = document.getElementById('warRankList');
+  if (!el) return;
+
+  const medals = ['🥇','🥈','🥉'];
+  el.innerHTML = data.map((d, i) => {
+    const val = mode.rankLabel(d.stock, d.value);
+    const isPos = d.value >= 0;
+    const color = (mode.key === 'roi' || mode.key === 'return')
+      ? (isPos ? 'var(--green)' : 'var(--red)')
+      : (mode.key === 'div' ? 'var(--gold)' : 'var(--text)');
+    return `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span style="font-size:16px;width:24px;text-align:center;">${medals[i] || (i+1) + '.'}</span>
+        <span style="font-size:13px;font-weight:600;">${d.emoji} ${d.symbol}</span>
+      </div>
+      <span style="font-size:13px;font-weight:700;color:${color};">${val}</span>
+    </div>`;
+  }).join('');
+}
+
+// ============ CALENDAR ============
+// 配息規則：
+//   每月4號：施羅德、路博邁5G
+//   每月27號：00985B、MLPI、SPYI、AIPI、QQQI
+//   每月週一：PLTY
+//   每月週四：CHPY
+
+function getDivDatesForMonth(year, month) {
+  // month = 0-based
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const divDates = {};
+
+  function addDiv(d, syms) {
+    if (d < 1 || d > daysInMonth) return;
+    if (!divDates[d]) divDates[d] = [];
+    syms.forEach(sym => { if (!divDates[d].includes(sym)) divDates[d].push(sym); });
+  }
+
+  // 每月4號：施羅德、路博邁5G
+  addDiv(4, ['施羅德', '路博邁5G']);
+
+  // 每月27號：固定5支
+  addDiv(27, ['00985B', 'MLPI', 'SPYI', 'AIPI', 'QQQI']);
+
+  // 每月週一：PLTY，週四：CHPY
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dow = new Date(year, month, d).getDay(); // 0=日 1=一 4=四
+    if (dow === 1) addDiv(d, ['PLTY']);  // 週一
+    if (dow === 4) addDiv(d, ['CHPY']); // 週四
+  }
+
+  return divDates;
+}
+
+function renderCalendar() {
+  const now = new Date();
+  renderDivList(now.getFullYear(), now.getMonth(), 'thisMonthDivList');
+  const nextM = now.getMonth() + 1 > 11 ? 0 : now.getMonth() + 1;
+  const nextY = now.getMonth() + 1 > 11 ? now.getFullYear() + 1 : now.getFullYear();
+  renderDivList(nextY, nextM, 'nextMonthDivList');
+  renderCalGrid();
+}
+
+function renderDivList(year, month, elId) {
+  const el = document.getElementById(elId);
+  const divDates = getDivDatesForMonth(year, month);
+  const monthName = `${year} 年 ${month + 1} 月`;
+
+  // 依日期排序整理清單
+  const sortedDates = Object.keys(divDates).map(Number).sort((a, b) => a - b);
+
+  if (sortedDates.length === 0) {
+    el.innerHTML = `<div class="empty-state">${monthName} 尚無配息</div>`;
+    return;
+  }
+
+  let html = `<div style="font-size:12px;color:var(--text3);margin-bottom:10px;">${monthName} 預計配息</div>`;
+
+  sortedDates.forEach(d => {
+    const syms = divDates[d];
+    const dow = new Date(year, month, d).getDay();
+    const dowStr = ['日','一','二','三','四','五','六'][dow];
+    const dateLabel = `${month+1}/${d}（週${dowStr}）`;
+
+    const entries = syms.map(sym => {
+      const s = state.stocks.find(x => x.symbol === sym);
+      if (!s) return null;
+      // 週配股估算：月配息 ÷ 當月該股週數
+      const weekCount = Object.values(divDates).filter(arr => arr.includes(sym)).length;
+      const amt = (s.cycle === 'weekly' || sym === 'CHPY' || sym === 'PLTY')
+        ? (s.monthlyDiv / (weekCount || 4))
+        : s.monthlyDiv;
+      return { s, amt };
+    }).filter(Boolean);
+
+    const total = entries.reduce((sum, e) => sum + e.amt, 0);
+
+    html += `
+    <div style="margin-bottom:12px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+        <span style="font-size:12px;font-weight:600;color:var(--gold);">📅 ${dateLabel}</span>
+        <span style="font-size:12px;color:var(--green);font-weight:600;">合計 $${fmt(total)}</span>
+      </div>
+      ${entries.map(({ s, amt }) => `
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 10px;background:var(--bg3);border-radius:6px;margin-bottom:4px;">
+          <span style="font-size:13px;">${s.emoji} ${s.name}</span>
+          <span style="font-size:13px;font-weight:700;color:var(--gold);">$${fmt(amt)}</span>
+        </div>`).join('')}
+    </div>`;
+  });
+
+  el.innerHTML = html;
+}
+
+function renderCalGrid() {
+  const { calYear: year, calMonth: month } = state;
+  document.getElementById('calTitle').textContent = `${year} 年 ${month + 1} 月`;
+
+  const headers = ['日','一','二','三','四','五','六'];
+  document.getElementById('calDayHeaders').innerHTML = headers.map(h =>
+    `<div class="cal-day-header">${h}</div>`
+  ).join('');
+
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const today = new Date();
+  const divDates = getDivDatesForMonth(year, month);
+
+  let html = '';
+  for (let i = 0; i < firstDay; i++) {
+    html += `<div class="cal-day empty"></div>`;
+  }
+  for (let d = 1; d <= daysInMonth; d++) {
+    const isToday = d === today.getDate() && month === today.getMonth() && year === today.getFullYear();
+    const hasDivs = divDates[d];
+    html += `<div class="cal-day ${isToday ? 'today' : ''} ${hasDivs ? 'has-dividend' : ''}"
+      onclick="showCalTooltip(${d}, ${JSON.stringify(hasDivs || []).replace(/"/g, '&quot;')})">
+      <span>${d}</span>
+      ${hasDivs ? '<span class="cal-dot"></span>' : ''}
+    </div>`;
+  }
+  document.getElementById('calGrid').innerHTML = html;
+}
+
+function showCalTooltip(day, syms) {
+  const tooltip = document.getElementById('calTooltip');
+  if (!syms || syms.length === 0) { tooltip.style.display = 'none'; return; }
+  const dow = new Date(state.calYear, state.calMonth, day).getDay();
+  const dowStr = ['日','一','二','三','四','五','六'][dow];
+  tooltip.style.display = 'block';
+  tooltip.innerHTML = `<div style="color:var(--text3);margin-bottom:6px;font-size:11px;">${state.calMonth+1}/${day}（週${dowStr}）預計配息</div>` +
+    syms.map(sym => {
+      const s = state.stocks.find(x => x.symbol === sym);
+      if (!s) return '';
+      const divDates = getDivDatesForMonth(state.calYear, state.calMonth);
+      const weekCount = Object.values(divDates).filter(arr => arr.includes(sym)).length;
+      const amt = (sym === 'CHPY' || sym === 'PLTY')
+        ? (s.monthlyDiv / (weekCount || 4)) : s.monthlyDiv;
+      return `<div style="display:flex;justify-content:space-between;padding:4px 0;">
+        <span>${s.emoji} ${s.symbol}</span>
+        <span style="color:var(--gold);">$${fmt(amt)}</span>
+      </div>`;
+    }).join('');
+}
+
+function calPrev() { state.calMonth--; if (state.calMonth < 0) { state.calMonth = 11; state.calYear--; } renderCalGrid(); }
+function calNext() { state.calMonth++; if (state.calMonth > 11) { state.calMonth = 0; state.calYear++; } renderCalGrid(); }
+
+// ============ YIELD ============
+function renderYield() {
+  const list = document.getElementById('yieldList');
+  const dividers = state.stocks.filter(s => s.monthlyDiv > 0);
+
+  list.innerHTML = dividers.map(s => {
+    const annualDiv = s.monthlyDiv * 12;
+    const mv = getStockMarketValueTWD(s);
+    const yoc = annualDiv / s.cost;
+    const mktYield = annualDiv / mv;
+    return `<div class="yield-row">
+      <div>
+        <div style="font-size:13px;font-weight:600;">${s.emoji} ${s.symbol}</div>
+        <div style="font-size:11px;color:var(--text3);">年化配息 $${fmt(annualDiv)}</div>
+      </div>
+      <div style="text-align:right;">
+        <div class="yoc-val">${fmtPct(yoc)}</div>
+        <div class="mkt-val">${fmtPct(mktYield)}</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  renderYieldChart(dividers);
+}
+
+function renderYieldChart(dividers) {
+  const canvas = document.getElementById('yieldChart');
+  if (canvas._chart) canvas._chart.destroy();
+  const ctx = canvas.getContext('2d');
+
+  const labels = dividers.map(s => s.symbol);
+  const yocData = dividers.map(s => parseFloat(((s.monthlyDiv * 12) / s.cost * 100).toFixed(2)));
+  const mktData = dividers.map(s => parseFloat(((s.monthlyDiv * 12) / getStockMarketValueTWD(s) * 100).toFixed(2)));
+
+  canvas._chart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        { label: 'YOC %', data: yocData, backgroundColor: 'rgba(76,175,114,0.7)', borderRadius: 3 },
+        { label: '現價殖利率 %', data: mktData, backgroundColor: 'rgba(91,155,213,0.7)', borderRadius: 3 },
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { color: '#6B5F40', font: { size: 10 }, maxRotation: 45, autoSkip: false }, grid: { color: 'rgba(201,168,76,0.08)' } },
+        y: { ticks: { color: '#6B5F40', font: { size: 10 }, callback: v => v + '%' }, grid: { color: 'rgba(201,168,76,0.08)' } }
+      }
+    }
+  });
+}
+
+// ============ PAYBACK ============
+function renderPayback() {
+  const list = document.getElementById('paybackList');
+
+  // 總計
+  let totalCost = 0, totalReceived = 0;
+  state.stocks.forEach(s => {
+    totalCost += s.cost;
+    const recv = getReceivedDividends(s);
+    totalReceived += recv;
+  });
+  const totalMonthlyDiv = state.stocks.reduce((sum, s) => sum + s.monthlyDiv, 0);
+  const totalRemaining = Math.max(0, totalCost - totalReceived);
+  const totalPct = Math.min(1, totalReceived / totalCost);
+  const totalMonthsLeft = totalRemaining > 0 && totalMonthlyDiv > 0 ? Math.ceil(totalRemaining / totalMonthlyDiv) : 0;
+
+  const summaryHtml = `
+    <div style="background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:14px;margin-bottom:14px;">
+      <div style="font-size:11px;color:var(--text3);margin-bottom:6px;">全部軍團回本進度</div>
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;">
+        <span style="font-size:13px;color:var(--text2);">已回收 <span style="color:var(--green);font-weight:700;">$${fmt(totalReceived)}</span></span>
+        <span style="font-size:13px;color:var(--text2);">剩餘 <span style="color:var(--gold);font-weight:700;">$${fmt(totalRemaining)}</span></span>
+      </div>
+      <div class="progress-bar" style="height:6px;">
+        <div class="progress-fill" style="width:${(totalPct*100).toFixed(1)}%"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-top:8px;font-size:11px;color:var(--text3);">
+        <span>${(totalPct*100).toFixed(1)}% 已回收</span>
+        <span>預計還需 <span style="color:var(--gold);font-weight:700;">${totalMonthsLeft}</span> 個月（約 ${(totalMonthsLeft/12).toFixed(1)} 年）</span>
+      </div>
+    </div>`;
+
+  const rowsHtml = state.stocks.map(s => {
+    const monthlyDiv = s.monthlyDiv;
+    if (monthlyDiv <= 0) {
+      return `<div class="payback-row">
+        <div style="flex:1;">
+          <div style="font-size:13px;font-weight:600;">${s.emoji} ${s.name}</div>
+          <div style="font-size:11px;color:var(--text3);">無配息</div>
+        </div>
+        <span style="color:var(--text3);font-size:12px;">N/A</span>
+      </div>`;
+    }
+
+    // 優先用試算表累計配息，否則用 WebApp 記錄
+    const received = getReceivedDividends(s);
+
+    const remaining = Math.max(0, s.cost - received);
+    const monthsLeft = remaining > 0 ? Math.ceil(remaining / monthlyDiv) : 0;
+    const pct = Math.min(1, received / s.cost);
+    const yearsLeft = (monthsLeft / 12).toFixed(1);
+
+    return `<div class="payback-row">
+      <div style="flex:1;">
+        <div style="font-size:13px;font-weight:600;">${s.emoji} ${s.name}</div>
+        <div style="font-size:11px;color:var(--text3);">已回 $${fmt(received)} · 剩 $${fmt(remaining)}</div>
+        <div class="progress-bar">
+          <div class="progress-fill" style="width:${(pct*100).toFixed(1)}%"></div>
+        </div>
+      </div>
+      <div style="text-align:right;margin-left:12px;">
+        <div style="color:var(--gold);font-weight:700;font-size:18px;">${monthsLeft}</div>
+        <div style="font-size:10px;color:var(--text3);">個月</div>
+        <div style="font-size:10px;color:var(--text3);">${yearsLeft}年</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  list.innerHTML = summaryHtml + rowsHtml;
+  renderTaxSummary();
+}
+
+function renderPledge() {
+  const pledges = state.pledges || [];
+  const loans = state.loans || [];
+  const list = document.getElementById('pledgeList');
+  const loanList = document.getElementById('loanList');
+  if (!list) return;
+
+  if (pledges.length === 0) {
+    document.getElementById('pledgeTotalLoan').textContent = '$ 0';
+    document.getElementById('pledgeTotalInterest').textContent = '$ 0';
+    document.getElementById('pledgeAvgMaint').textContent = '--';
+    document.getElementById('pledgeCount').textContent = '0';
+    document.getElementById('pledgeAvgRate').textContent = '--';
+    document.getElementById('pledgeTotalLots').textContent = '0';
+    list.innerHTML = '<div class="empty-state">尚無質押紀錄</div>';
+  }
+
+  if (pledges.length > 0) {
+    const totalLoan = pledges.reduce((sum, p) => sum + (p.loanAmount || 0), 0);
+    const totalInterest = pledges.reduce((sum, p) => sum + (p.accruedInterest || 0), 0);
+    const avgMaint = pledges.reduce((sum, p) => sum + (p.latestMaintenance || 0), 0) / pledges.length;
+    const avgRate = pledges.reduce((sum, p) => sum + (p.rate || 0), 0) / pledges.length;
+    const totalLots = pledges.reduce((sum, p) => sum + (p.lots || 0), 0);
+
+    document.getElementById('pledgeTotalLoan').textContent = '$ ' + fmt(totalLoan);
+    document.getElementById('pledgeTotalInterest').textContent = '$ ' + fmt(totalInterest);
+    document.getElementById('pledgeAvgMaint').textContent = fmtPct(avgMaint);
+    document.getElementById('pledgeCount').textContent = String(pledges.length);
+    document.getElementById('pledgeAvgRate').textContent = fmtPct(avgRate);
+    document.getElementById('pledgeTotalLots').textContent = fmt(totalLots);
+
+    list.innerHTML = pledges.map(p => {
+      const maintColor = p.latestMaintenance >= 1.66 ? 'var(--green)' : (p.latestMaintenance >= 1.5 ? 'var(--gold)' : 'var(--red)');
+      return `<div class="pledge-row">
+        <div style="flex:1;min-width:0;">
+          <div class="pledge-name">🔐 ${p.target}</div>
+          <div class="pledge-meta">
+            質押日期 ${p.pledgeDate || '--'} · 經過 ${fmt(p.elapsedMonths)} 個月<br>
+            質押時股價 ${p.pledgePrice ? Number(p.pledgePrice).toFixed(2) : '--'} · 現價 ${p.currentPrice ? Number(p.currentPrice).toFixed(2) : '--'}<br>
+            張數 ${fmt(p.lots)} · 利率 ${fmtPct(p.rate)}
+          </div>
+        </div>
+        <div class="pledge-right">
+          <div class="pledge-main">$${fmt(p.loanAmount)}</div>
+          <div class="pledge-sub">借款金額</div>
+          <div class="pledge-sub" style="color:${maintColor};">最新維持率 ${fmtPct(p.latestMaintenance)}</div>
+          <div class="pledge-sub">利息累積 $${fmt(p.accruedInterest)}</div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  if (!loanList) return;
+  if (loans.length === 0) {
+    document.getElementById('loanTotalAmount').textContent = '$ 0';
+    document.getElementById('loanRemainingAmount').textContent = '$ 0';
+    document.getElementById('loanAvgRate').textContent = '--';
+    document.getElementById('loanMonthlyPayment').textContent = '$ 0';
+    loanList.innerHTML = '<div class="empty-state">尚無信貸紀錄</div>';
+    return;
+  }
+
+  const totalLoanAmount = loans.reduce((sum, l) => sum + (l.loanAmount || 0), 0);
+  const totalRemainingAmount = loans.reduce((sum, l) => sum + (l.remainingAmount || 0), 0);
+  const avgLoanRate = loans.reduce((sum, l) => sum + (l.rate || 0), 0) / loans.length;
+  const totalMonthlyPayment = loans.reduce((sum, l) => sum + (l.monthlyPayment || 0), 0);
+
+  document.getElementById('loanTotalAmount').textContent = '$ ' + fmt(totalLoanAmount);
+  document.getElementById('loanRemainingAmount').textContent = '$ ' + fmt(totalRemainingAmount);
+  document.getElementById('loanAvgRate').textContent = fmtPct(avgLoanRate);
+  document.getElementById('loanMonthlyPayment').textContent = '$ ' + fmt(totalMonthlyPayment);
+
+  loanList.innerHTML = loans.map(l => `
+    <div class="loan-row">
+      <div style="flex:1;min-width:0;">
+        <div class="pledge-name">🏦 ${l.bank}</div>
+        <div class="pledge-meta">
+          借款日期 ${l.loanDate || '--'} · 經過 ${fmt(l.elapsedMonths)} / ${fmt(l.termMonths)} 期<br>
+          每期還款 $${fmt(l.monthlyPayment)} · 利率 ${fmtPct(l.rate)}<br>
+          已還款 $${fmt(l.repaidTotal)} · 已付利息 $${fmt(l.interestPaid)}
+        </div>
+      </div>
+      <div class="pledge-right">
+        <div class="pledge-main">$${fmt(l.remainingAmount)}</div>
+        <div class="pledge-sub">剩餘金額</div>
+        <div class="pledge-sub">原借款 $${fmt(l.loanAmount)}</div>
+        <div class="pledge-sub">累積本金 $${fmt(l.principalPaid)}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ============ LOG ============
+function renderLog() {
+  const list = document.getElementById('logList');
+  const logs = state.logs || [];
+  if (logs.length === 0) {
+    list.innerHTML = '<div class="empty-state">尚無操作記錄</div>';
+    return;
+  }
+  list.innerHTML = logs.slice(0, 30).map(l => `
+    <div class="log-item">
+      <span class="log-type ${l.type}">${l.type === 'buy' ? '買入' : l.type === 'sell' ? '賣出' : '配息'}</span>
+      <div style="color:var(--text2);">${l.label}</div>
+      <div style="color:var(--text3);font-size:11px;">${l.date}</div>
+    </div>`).join('');
+}
+
+
+// ============ PRICE UPDATE ============
+function renderPriceList() {
+  const el = document.getElementById('priceUpdateList');
+  if (!el) return;
+  el.innerHTML = state.stocks.map(s => {
+    const unit = s.isTWD ? 'TWD' : 'USD';
+    const updatedAt = s.priceUpdatedAt ? `<span style="color:var(--text3);font-size:10px;margin-left:6px;">更新於 ${s.priceUpdatedAt}</span>` : '';
+    return `
+    <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);">
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:13px;font-weight:600;white-space:nowrap;">${s.emoji} ${s.symbol}</div>
+        <div style="font-size:11px;color:var(--text3);">目前 ${s.price} ${unit}${updatedAt}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
+        <input type="number" id="price_${s.symbol}" value="${s.price}"
+          step="0.01" min="0"
+          style="width:90px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:6px 8px;color:var(--text);font-size:13px;text-align:right;font-family:inherit;outline:none;">
+        <span style="font-size:11px;color:var(--text3);flex-shrink:0;">${unit}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function savePrices() {
+  const today = new Date().toLocaleDateString('zh-TW');
+  let changed = 0;
+  state.stocks.forEach(s => {
+    const el = document.getElementById('price_' + s.symbol);
+    if (!el) return;
+    const newPrice = parseFloat(el.value);
+    if (!isNaN(newPrice) && newPrice > 0 && newPrice !== s.price) {
+      s.price = newPrice;
+      s.priceUpdatedAt = today;
+      changed++;
+    }
+  });
+  if (changed === 0) { showToast('⚠️ 沒有任何價格變動'); return; }
+
+  // 快照市值
+  const totalVal = state.stocks.reduce((sum, s) => sum + getStockMarketValueTWD(s), 0);
+  state.snapshots = state.snapshots || [];
+  state.snapshots.push({ date: today, value: totalVal });
+
+  saveState();
+  renderAll();
+  showToast(`✅ 已更新 ${changed} 支股票現價，市值重算完成`);
+}
+// ============ GOOGLE SHEETS INTEGRATION ============
+// 所有讀寫統一走 Apps Script Web App URL（解決 CORS 問題）
+
+async function callScript(params) {
+  const url = state.scriptUrl;
+  if (!url) { showToast('⚠️ 請先在設定頁填入 Script URL'); return null; }
+  try {
+    const qs = new URLSearchParams(params).toString();
+    const res = await fetch(`${url}?${qs}`, { method: 'GET', redirect: 'follow' });
+    const text = await res.text();
+    try { return JSON.parse(text); }
+    catch(e) { return { ok: false, error: '回傳非 JSON：' + text.slice(0, 100) }; }
+  } catch(e) {
+    return { ok: false, error: e.message };
+  }
+}
+
+async function postScript(payload) {
+  const url = state.scriptUrl;
+  if (!url) return null;
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      redirect: 'follow',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify(payload)
+    });
+    const text = await res.text();
+    try { return JSON.parse(text); }
+    catch(e) { return { ok: false, error: text.slice(0, 100) }; }
+  } catch(e) {
+    return { ok: false, error: e.message };
+  }
+}
+
+async function loadFromSheets() {
+  if (!state.scriptUrl) { showToast('⚠️ 請先填入 Script URL 並儲存設定'); return; }
+  showToast('🔄 讀取中...');
+
+  const [pricesRes, dataRes] = await Promise.all([
+    callScript({ action: 'getPrices' }),
+    callScript({ action: 'getData' }),
+  ]);
+
+  if (!pricesRes?.ok) {
+    showToast('❌ 讀取失敗：' + (pricesRes?.error || '無法連線'));
+    return;
+  }
+
+  // 同步現價
+  const today = new Date().toLocaleDateString('zh-TW');
+  if (pricesRes.data) {
+    Object.entries(pricesRes.data).forEach(([sym, price]) => {
+      const stock = state.stocks.find(s => s.symbol === sym);
+      if (stock && price > 0) { stock.price = price; stock.priceUpdatedAt = today; }
+    });
+  }
+  if (pricesRes.stockReturns)   state.stockReturns         = pricesRes.stockReturns;
+  if (pricesRes.cumulativeDivs) state.cumulativeDivs       = pricesRes.cumulativeDivs;
+  if (pricesRes.marketSignals)  state.marketSignals        = pricesRes.marketSignals;
+  if (pricesRes.totalReturn)    state.sheetsTotalReturn    = pricesRes.totalReturn;
+  if (pricesRes.totalMarketVal) state.sheetsTotalMarketVal = pricesRes.totalMarketVal;
+  if (pricesRes.totalCost)      state.sheetsTotalCost      = pricesRes.totalCost;
+  state.lastPriceSync = pricesRes.updatedAt;
+
+  // 同步配息記錄、交易記錄、快照
+  if (dataRes?.ok) {
+    if (dataRes.dividends?.length > 0) {
+      state.dividendHistory = dataRes.dividends;
+      const cumDivs = {};
+      dataRes.dividends.forEach(d => {
+        if (d.symbol && d.amount > 0) cumDivs[d.symbol] = (cumDivs[d.symbol] || 0) + d.amount;
+      });
+      state.cumulativeDivs = cumDivs;
+    }
+    if (dataRes.trades?.length > 0)    state.tradeHistory = dataRes.trades;
+    if (dataRes.snapshots?.length > 0) {
+      state.snapshots = dataRes.snapshots.map(s => ({ date: s.date, value: s.value }));
+    }
+    state.pledges = dataRes.pledges || [];
+    state.loans = dataRes.loans || [];
+    state.marketSignals = dataRes.marketSignals || state.marketSignals || [];
+    const logs = [];
+    (dataRes.trades || []).forEach(t => logs.push({
+      type: t.type === '買入' ? 'buy' : 'sell',
+      date: t.date, symbol: t.symbol,
+      label: `${t.type} ${t.symbol} ${t.shares}股 $${fmt(t.amount)}`
+    }));
+    (dataRes.dividends || []).forEach(d => logs.push({
+      type: 'div', date: d.date, symbol: d.symbol,
+      label: `配息 ${d.symbol} $${fmt(d.amount)}` + (d.taxRefund > 0 ? ` 退稅+$${fmt(d.taxRefund)}` : '')
+    }));
+    logs.sort((a, b) => String(b.date).localeCompare(String(a.date)));
+    state.logs = logs.slice(0, 50);
+  }
+
+  saveState();
+  renderAll();
+  showToast('✅ 雲端資料同步完成！');
+}
+// 同步現價 + 持股總覽
+async function syncPricesOnly() {
+  if (!state.scriptUrl) { showToast('⚠️ 請先填入 Script URL'); return; }
+  showToast('🔄 同步中...');
+
+  const [pricesRes, holdingsRes] = await Promise.all([
+    callScript({ action: 'getPrices' }),
+    callScript({ action: 'getHoldings' }),
+  ]);
+
+  if (!pricesRes?.ok) { showToast('❌ 同步失敗：' + (pricesRes?.error || '無法連線')); return; }
+
+  const today = new Date().toLocaleDateString('zh-TW');
+
+  // 同步現價（從 Intro.）
+  Object.entries(pricesRes.data || {}).forEach(([sym, price]) => {
+    const stock = state.stocks.find(s => s.symbol === sym);
+    if (stock && price > 0) { stock.price = price; stock.priceUpdatedAt = today; }
+  });
+  state.lastPriceSync = pricesRes.updatedAt;
+  if (pricesRes.stockReturns)   state.stockReturns         = pricesRes.stockReturns;
+  if (pricesRes.cumulativeDivs) state.cumulativeDivs       = pricesRes.cumulativeDivs;
+  if (pricesRes.marketSignals)  state.marketSignals        = pricesRes.marketSignals;
+  if (pricesRes.totalReturn)    state.sheetsTotalReturn    = pricesRes.totalReturn;
+  if (pricesRes.totalMarketVal) state.sheetsTotalMarketVal = pricesRes.totalMarketVal;
+  if (pricesRes.totalCost)      state.sheetsTotalCost      = pricesRes.totalCost;
+
+  // 同步持股總覽（所有欄位）
+  if (holdingsRes?.ok && holdingsRes.data?.length > 0) {
+    holdingsRes.data.forEach(h => {
+      const stock = state.stocks.find(s => s.symbol === h.symbol);
+      if (!stock) return;
+      if (h.shares > 0)      stock.shares      = h.shares;
+      if (h.cost > 0)        stock.cost        = h.cost;
+      if (h.price > 0)       stock.price       = h.price;
+      if (h.avgCost > 0)     stock.avgCost     = h.avgCost;
+      if (h.monthlyDiv > 0)  stock.monthlyDiv  = h.monthlyDiv;
+      if (h.marketValue > 0) stock.marketValue = h.marketValue;
+      stock.totalReturn = h.totalReturn || 0;
+      stock.totalDiv    = h.totalDiv    || 0;
+      stock.roi         = h.roi         || 0;
+      stock.unrealized  = h.unrealized  || 0;
+      if (h.currency)   stock.isTWD = (h.currency.toUpperCase() === 'TWD');
+    });
+
+    // 更新累計配息和含息報酬
+    const cumDivs = {}, rets = {};
+    holdingsRes.data.forEach(h => {
+      if (h.totalDiv > 0)    cumDivs[h.symbol] = h.totalDiv;
+      if (h.totalReturn)     rets[h.symbol]    = h.totalReturn;
+    });
+    if (Object.keys(cumDivs).length > 0) state.cumulativeDivs = cumDivs;
+    if (Object.keys(rets).length > 0)    state.stockReturns   = { ...state.stockReturns, ...rets };
+  }
+
+  // 快照市值
+  const totalVal = state.stocks.reduce((sum, s) => sum + getStockMarketValueTWD(s), 0);
+  state.snapshots = state.snapshots || [];
+  state.snapshots.push({ date: today, value: totalVal });
+
+  saveState();
+  renderAll();
+  showToast('✅ 現價及持股資料同步完成！');
+}
+
+async function writeToSheets(payload) {
+  if (!state.scriptUrl) return null;
+  try {
+    // 把 action 轉換成正確的 API action
+    let gsAction = '';
+    if (payload.action === 'trade')    gsAction = 'addTrade';
+    if (payload.action === 'dividend') gsAction = 'addDividend';
+    if (!gsAction) return null;
+
+    // 建立乾淨的 params，不含原本的 action 欄位
+    const { action: _omit, ...rest } = payload;
+    const params = { action: gsAction, ...rest, token: state.writeToken || '' };
+    const qs = new URLSearchParams(params).toString();
+
+    const res  = await fetch(`${state.scriptUrl}?${qs}`, { method: 'GET', redirect: 'follow' });
+    const text = await res.text();
+    try {
+      const data = JSON.parse(text);
+      if (!data.ok) showToast('❌ 寫入失敗：' + (data.error || '未知錯誤'));
+      return data;
+    } catch(e) {
+      showToast('❌ 回應解析失敗');
+      return null;
+    }
+  } catch(e) {
+    showToast('❌ 網路錯誤：' + e.message);
+    return null;
+  }
+}
+
+// ============ PASSWORD ============
+const APP_PASSWORD      = '526';
+const SETTINGS_PASSWORD = '526';
+
+function checkLogin() {
+  const input = document.getElementById('loginPasswordInput').value.trim();
+  if (!input) return;
+
+  if (input === APP_PASSWORD) {
+    document.getElementById('loginOverlay').style.display = 'none';
+    document.getElementById('loginPasswordInput').value = '';
+    document.getElementById('loginError').textContent = '';
+    if (state.scriptUrl) syncPricesOnly();
+  } else {
+    document.getElementById('loginError').textContent = '❌ 密碼錯誤，請再試一次';
+    document.getElementById('loginPasswordInput').value = '';
+    setTimeout(() => { document.getElementById('loginError').textContent = ''; }, 2000);
+  }
+}
+
+function checkSettingsPassword() {
+  const input = document.getElementById('settingsPasswordInput').value;
+  if (input === SETTINGS_PASSWORD) {
+    document.getElementById('settingsLock').style.display = 'none';
+    document.getElementById('settingsContent').style.display = 'block';
+    document.getElementById('settingsPasswordInput').value = '';
+    document.getElementById('settingsPasswordError').textContent = '';
+  } else {
+    document.getElementById('settingsPasswordError').textContent = '❌ 密碼錯誤';
+    document.getElementById('settingsPasswordInput').value = '';
+  }
+}
+
+// 切換到設定頁時重置密碼鎖
+function lockSettings() {
+  const lock = document.getElementById('settingsLock');
+  const cnt  = document.getElementById('settingsContent');
+  if (lock && cnt) {
+    lock.style.display = 'block';
+    cnt.style.display = 'none';
+  }
+}
+
+async function takeManualSnapshot() {
+  if (!state.scriptUrl) { showToast('⚠️ 請先填入 Script URL'); return; }
+  showToast('🔄 快照中...');
+  const today = new Date().toLocaleDateString('zh-TW');
+  const res = await callScript({ action: 'addSnapshot', date: today, token: state.writeToken || '' });
+  if (res && res.ok) {
+    showToast('✅ 市值快照已記錄！');
+    const totalVal = state.sheetsTotalMarketVal ||
+      state.stocks.reduce((sum, s) => sum + getStockMarketValueTWD(s), 0);
+    state.snapshots = state.snapshots || [];
+    state.snapshots.push({ date: today, value: totalVal });
+    saveState();
+    renderHome();
+  } else {
+    showToast('❌ 快照失敗：' + (res?.error || '未知錯誤'));
+  }
+}
+
+function saveSettings() {
+  state.apiKey     = document.getElementById('settingApiKey').value.trim();
+  state.sheetId    = document.getElementById('settingSheetId').value.trim() || SHEET_ID;
+  state.scriptUrl  = document.getElementById('settingScriptUrl').value.trim();
+  state.writeToken = document.getElementById('settingWriteToken').value.trim();
+  saveState();
+  showToast('✅ 設定已儲存');
+}
+
+function clearLocalData() {
+  if (!confirm('確定要清除所有本地資料？\n（API Key 和 Script URL 會保留）')) return;
+  // 清除前先保存設定
+  const savedApiKey    = state.apiKey    || '';
+  const savedSheetId   = state.sheetId   || SHEET_ID;
+  const savedScriptUrl = state.scriptUrl || '';
+  localStorage.removeItem('wm_state');
+  // 清除後重建 state 並還原設定
+  const freshState = { apiKey: savedApiKey, sheetId: savedSheetId, scriptUrl: savedScriptUrl };
+  localStorage.setItem('wm_state', JSON.stringify(freshState));
+  location.reload();
+}
+
+// ============ START ============
+init();
+// 啟動時顯示登入遮罩（init 先跑完讓頁面準備好，遮罩蓋在上面）
+document.getElementById('loginOverlay').style.display = 'flex';
+</script>
+</body>
+</html>
