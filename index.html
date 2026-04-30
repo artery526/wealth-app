@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>醫館 · 頭痛紀錄</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;500&family=Noto+Sans+TC:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --green-dark:#2d5a27; --green-mid:#3d7a34; --green-light:#e8f0e6;
+      --green-sidebar:#1e3d1a; --green-nav:#f0f5ee;
+      --cream:#faf8f4; --warm-gray:#f5f2ec;
+      --text-main:#1a2e17; --text-muted:#6b7c69; --text-hint:#9dab9a;
+      --border:#dde8d8; --border-light:#edf3eb; --white:#ffffff;
+    }
+    html,body { height:100%; font-family:'Noto Sans TC',sans-serif; background:var(--warm-gray); color:var(--text-main); font-size:13px; line-height:1.6; }
+    .layout { display:flex; height:100vh; overflow:hidden; }
+
+    /* Sidebar */
+    .sidebar { width:176px; flex-shrink:0; background:var(--green-sidebar); display:flex; flex-direction:column; overflow:hidden; }
+    .sidebar-logo { padding:20px 16px 14px; border-bottom:1px solid rgba(255,255,255,0.08); }
+    .logo-flower { font-size:26px; line-height:1; margin-bottom:6px; display:block; }
+    .logo-title { font-family:'Noto Serif TC',serif; font-size:16px; color:#fff; font-weight:500; }
+    .logo-sub { font-size:10px; color:rgba(255,255,255,0.4); margin-top:2px; }
+    .sidebar-nav { flex:1; padding:8px 0; }
+    .nav-item { display:flex; align-items:center; gap:9px; padding:11px 16px; cursor:pointer; color:rgba(255,255,255,0.5); font-size:12.5px; border-left:2px solid transparent; transition:all 0.15s; user-select:none; }
+    .nav-item:hover { background:rgba(255,255,255,0.07); color:rgba(255,255,255,0.85); }
+    .nav-item.active { background:rgba(255,255,255,0.12); color:#fff; border-left-color:#7fc47a; }
+    .nav-icon { font-size:14px; width:18px; text-align:center; flex-shrink:0; }
+
+    /* Settings in sidebar */
+    .sidebar-settings { padding:12px 14px; border-top:1px solid rgba(255,255,255,0.08); }
+    .s-section-title { font-size:10px; color:rgba(255,255,255,0.32); letter-spacing:0.6px; text-transform:uppercase; margin-bottom:10px; }
+    .s-field { margin-bottom:8px; }
+    .s-field label { display:block; font-size:10px; color:rgba(255,255,255,0.45); margin-bottom:3px; }
+    .s-field input { width:100%; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.12); border-radius:5px; padding:5px 8px; font-size:11px; color:rgba(255,255,255,0.85); outline:none; font-family:'Noto Sans TC',sans-serif; }
+    .s-field input:focus { border-color:rgba(255,255,255,0.3); background:rgba(255,255,255,0.13); }
+    .s-field input::placeholder { color:rgba(255,255,255,0.2); font-size:10px; }
+    .s-hint { font-size:9.5px; color:rgba(255,255,255,0.28); line-height:1.5; margin-top:3px; }
+    .s-save-btn { width:100%; margin-top:4px; padding:6px; background:rgba(127,196,122,0.18); border:1px solid rgba(127,196,122,0.32); border-radius:5px; color:#7fc47a; font-size:11px; cursor:pointer; font-family:'Noto Sans TC',sans-serif; transition:all 0.12s; }
+    .s-save-btn:hover { background:rgba(127,196,122,0.3); }
+    .s-status { font-size:10px; margin-top:5px; text-align:center; min-height:14px; }
+    .s-status.ok { color:#7fc47a; }
+    .s-status.err { color:#e8826e; }
+    .sidebar-footer { padding:10px 16px; border-top:1px solid rgba(255,255,255,0.08); }
+    .help-btn { display:flex; align-items:center; gap:6px; color:rgba(255,255,255,0.32); font-size:11px; cursor:pointer; }
+    .help-btn:hover { color:rgba(255,255,255,0.62); }
+
+    /* Main */
+    .main { flex:1; display:flex; flex-direction:column; overflow:hidden; min-width:0; }
+    .topbar { background:var(--white); border-bottom:1px solid var(--border-light); padding:0 22px; height:50px; display:flex; align-items:center; gap:10px; flex-shrink:0; }
+    .page-title { font-size:16px; font-weight:500; }
+    .page-sub { font-size:11px; color:var(--text-hint); }
+    .content { flex:1; overflow-y:auto; padding:16px 18px; display:flex; gap:14px; min-height:0; }
+
+    /* Form */
+    .form-col { width:480px; flex-shrink:0; display:flex; flex-direction:column; gap:11px; }
+    .panel { background:var(--white); border:1px solid var(--border); border-radius:10px; padding:14px 16px; }
+    .panel-header { font-size:13px; font-weight:500; display:flex; align-items:center; gap:7px; margin-bottom:12px; }
+    .step-badge { width:19px; height:19px; border-radius:50%; background:var(--green-dark); color:#fff; font-size:10px; font-weight:500; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+    .time-row { display:flex; gap:9px; }
+    .time-field { flex:1; display:flex; align-items:center; gap:7px; border:1px solid var(--border); border-radius:7px; padding:6px 11px; background:#fafaf8; }
+    .time-field input { border:none; outline:none; background:transparent; font-size:13px; color:var(--text-main); width:100%; font-family:'Noto Sans TC',sans-serif; }
+    .time-icon { font-size:15px; color:var(--text-muted); flex-shrink:0; }
+    .diagram-row { display:flex; gap:12px; }
+    .diagram-left { flex:1; min-width:0; }
+    .view-tabs { display:flex; gap:5px; margin-bottom:9px; }
+    .vtab { padding:4px 13px; border:1px solid var(--border); border-radius:5px; font-size:11px; cursor:pointer; background:#fff; color:var(--text-muted); transition:all 0.12s; font-family:'Noto Sans TC',sans-serif; }
+    .vtab:hover { background:var(--green-nav); }
+    .vtab.active { background:var(--green-dark); color:#fff; border-color:var(--green-dark); }
+    .svg-wrap svg { width:100%; display:block; }
+    .diagram-hint { font-size:10px; color:var(--text-hint); text-align:center; margin-top:6px; }
+    .sel-col { width:160px; flex-shrink:0; }
+    .sel-col-title { font-size:11px; font-weight:500; color:var(--text-muted); margin-bottom:8px; }
+    .sel-item { display:flex; align-items:flex-start; gap:5px; padding:7px 9px; border:1px solid var(--border-light); border-radius:7px; margin-bottom:6px; background:var(--cream); }
+    .sel-item-body { flex:1; min-width:0; }
+    .sel-item-name { font-size:11px; font-weight:500; }
+    .sel-item-meridian { font-size:10px; color:var(--text-hint); margin-top:1px; line-height:1.4; }
+    .sel-item-acupoint { font-size:10px; color:var(--green-dark); margin-top:2px; font-weight:500; }
+    .sel-remove { cursor:pointer; font-size:16px; color:var(--text-hint); line-height:1; flex-shrink:0; padding:0 2px; }
+    .sel-remove:hover { color:#c46a6a; }
+    .sel-empty { font-size:11px; color:var(--text-hint); text-align:center; padding:18px 0; line-height:1.8; }
+    .sev-row { display:flex; gap:7px; }
+    .sev-cell { flex:1; }
+    .sev-btn { width:100%; padding:8px 4px; border:1px solid var(--border); border-radius:7px; background:#fff; cursor:pointer; text-align:center; transition:all 0.12s; font-family:'Noto Sans TC',sans-serif; }
+    .sev-btn:hover { border-color:var(--green-mid); background:var(--green-light); }
+    .sev-btn.active { border-color:var(--green-dark); background:var(--green-light); }
+    .sev-emoji { font-size:22px; display:block; }
+    .sev-label { font-size:10px; color:var(--text-muted); margin-top:3px; }
+    textarea.note { width:100%; border:1px solid var(--border); border-radius:7px; padding:8px 11px; font-size:12px; color:var(--text-main); background:#fafaf8; resize:none; height:60px; font-family:'Noto Sans TC',sans-serif; outline:none; }
+    textarea.note:focus { border-color:var(--green-mid); }
+    textarea.note::placeholder { color:var(--text-hint); }
+    .btn-row { display:flex; gap:9px; }
+    .btn-clear { padding:9px 16px; border:1px solid var(--border); border-radius:7px; background:#fff; color:var(--text-muted); font-size:12.5px; cursor:pointer; font-family:'Noto Sans TC',sans-serif; transition:all 0.12s; }
+    .btn-clear:hover { background:var(--warm-gray); }
+    .btn-save { flex:1; padding:9px; border:none; border-radius:7px; background:var(--green-dark); color:#fff; font-size:13px; font-weight:500; cursor:pointer; font-family:'Noto Sans TC',sans-serif; transition:opacity 0.12s; }
+    .btn-save:hover { opacity:0.88; }
+    .btn-save:disabled { opacity:0.45; cursor:not-allowed; }
+
+    /* Records */
+    .records-col { flex:1; min-width:0; display:flex; flex-direction:column; }
+    .records-panel { background:var(--white); border:1px solid var(--border); border-radius:10px; padding:14px 16px; flex:1; display:flex; flex-direction:column; min-height:0; }
+    .records-top { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; flex-shrink:0; }
+    .records-title { font-size:13px; font-weight:500; }
+    .records-actions { display:flex; gap:7px; }
+    .btn-export { padding:5px 12px; border:1px solid var(--border); border-radius:5px; background:#fff; font-size:11px; color:var(--text-muted); cursor:pointer; font-family:'Noto Sans TC',sans-serif; transition:all 0.12s; }
+    .btn-export:hover { background:var(--warm-gray); }
+    .btn-stats { padding:5px 12px; border:1px solid var(--green-dark); border-radius:5px; background:var(--green-light); font-size:11px; color:var(--green-dark); cursor:pointer; font-family:'Noto Sans TC',sans-serif; }
+    .table-wrap { flex:1; overflow-y:auto; min-height:0; }
+    table { width:100%; border-collapse:collapse; }
+    th { text-align:left; color:var(--text-muted); padding:6px 9px; font-weight:400; font-size:11px; border-bottom:1px solid var(--border-light); position:sticky; top:0; background:#fff; z-index:1; }
+    td { padding:9px 9px; border-bottom:1px solid var(--border-light); vertical-align:middle; font-size:12px; }
+    tr:last-child td { border-bottom:none; }
+    tbody tr:hover td { background:var(--green-nav); }
+    .dot { width:8px; height:8px; border-radius:50%; display:inline-block; flex-shrink:0; }
+    .loc-chips { display:flex; flex-wrap:wrap; gap:3px; }
+    .loc-chip { display:flex; align-items:center; gap:3px; font-size:10.5px; }
+    .sev-face { font-size:17px; }
+    .note-cell { color:var(--text-muted); max-width:110px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .act-btn { background:none; border:none; cursor:pointer; color:var(--text-hint); font-size:15px; padding:3px 4px; border-radius:4px; }
+    .act-btn:hover { background:var(--green-nav); color:var(--text-main); }
+    .empty-row td { text-align:center; padding:36px; color:var(--text-hint); }
+    .pagination { display:flex; align-items:center; justify-content:center; gap:5px; margin-top:12px; flex-shrink:0; }
+    .pg-btn { width:28px; height:28px; border:1px solid var(--border); border-radius:5px; background:#fff; font-size:12px; cursor:pointer; display:flex; align-items:center; justify-content:center; color:var(--text-muted); font-family:'Noto Sans TC',sans-serif; transition:all 0.12s; }
+    .pg-btn:hover { background:var(--green-nav); }
+    .pg-btn.active { background:var(--green-dark); color:#fff; border-color:var(--green-dark); }
+
+    /* Toast */
+    .toast { position:fixed; bottom:22px; right:22px; padding:11px 18px; border-radius:9px; font-size:12.5px; font-weight:500; box-shadow:0 4px 20px rgba(0,0,0,0.15); z-index:9999; display:none; max-width:320px; font-family:'Noto Sans TC',sans-serif; animation:slideUp 0.22s ease; }
+    .toast.show { display:block; }
+    .toast.success { background:var(--green-dark); color:#fff; }
+    .toast.error { background:#c46a6a; color:#fff; }
+    .toast.info { background:#fff; color:var(--text-main); border:1px solid var(--border); }
+    @keyframes slideUp { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+    ::-webkit-scrollbar { width:5px; } ::-webkit-scrollbar-track { background:transparent; } ::-webkit-scrollbar-thumb { background:var(--border); border-radius:3px; }
+    @media(max-width:768px){ .sidebar{display:none} .content{flex-direction:column;padding:10px} .form-col{width:100%} }
+  </style>
+</head>
+<body>
+<div class="layout">
+
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <span class="logo-flower">✿</span>
+      <div class="logo-title">醫館</div>
+      <div class="logo-sub">頭痛紀錄</div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-item"><span class="nav-icon">⌂</span>首頁</div>
+      <div class="nav-item active"><span class="nav-icon">✦</span>醫館</div>
+      <div class="nav-item"><span class="nav-icon">📊</span>紀錄統計</div>
+      <div class="nav-item"><span class="nav-icon">◎</span>穴位圖鑑</div>
+      <div class="nav-item"><span class="nav-icon">◈</span>調理建議</div>
+    </nav>
+
+    <div class="sidebar-settings">
+      <div class="s-section-title">⚙ 試算表設定</div>
+      <div class="s-field">
+        <label>Apps Script 網址</label>
+        <input id="cfgScriptUrl" placeholder="貼入 doGet 網址" autocomplete="off" />
+        <div class="s-hint">需部署 Google Apps Script，詳見說明</div>
+      </div>
+      <button class="s-save-btn" onclick="saveSettings()">儲存設定</button>
+      <div class="s-status" id="sStatus"></div>
+    </div>
+
+    <div class="sidebar-footer">
+      <div class="help-btn" onclick="showHelp()"><span>❓</span><span>設定說明</span></div>
+    </div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <span class="page-title">頭痛紀錄</span>
+      <span class="page-sub">記錄頭痛發生的時間、位置與對應筋絡，幫助您了解頭痛狀況。</span>
+    </header>
+
+    <div class="content">
+      <div class="form-col">
+
+        <div class="panel">
+          <div class="panel-header"><div class="step-badge">1</div>選擇頭痛時間</div>
+          <div class="time-row">
+            <div class="time-field"><span class="time-icon">📅</span><input type="date" id="dateIn" /></div>
+            <div class="time-field"><span class="time-icon">🕐</span><input type="time" id="timeIn" /></div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header"><div class="step-badge">2</div>點選頭痛位置（可多選）</div>
+          <div class="diagram-row">
+            <div class="diagram-left">
+              <div class="view-tabs">
+                <button class="vtab active" onclick="switchView('front',this)">正面</button>
+                <button class="vtab" onclick="switchView('side',this)">側面</button>
+                <button class="vtab" onclick="switchView('back',this)">背後</button>
+              </div>
+              <div class="svg-wrap"><svg id="headSvg" viewBox="0 0 200 265" xmlns="http://www.w3.org/2000/svg"></svg></div>
+              <div class="diagram-hint">提示：可點擊多個位置進行記錄</div>
+            </div>
+            <div class="sel-col">
+              <div class="sel-col-title">已選擇的位置與對應筋絡</div>
+              <div id="selList"><div class="sel-empty">尚未選擇位置<br>可多選</div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header"><div class="step-badge">3</div>頭痛強度（選填）</div>
+          <div class="sev-row">
+            <div class="sev-cell"><button class="sev-btn" onclick="setSev(1,this)"><span class="sev-emoji">😊</span><div class="sev-label">無微</div></button></div>
+            <div class="sev-cell"><button class="sev-btn" onclick="setSev(2,this)"><span class="sev-emoji">😐</span><div class="sev-label">輕微</div></button></div>
+            <div class="sev-cell"><button class="sev-btn active" onclick="setSev(3,this)"><span class="sev-emoji">😑</span><div class="sev-label">中等</div></button></div>
+            <div class="sev-cell"><button class="sev-btn" onclick="setSev(4,this)"><span class="sev-emoji">😣</span><div class="sev-label">嚴重</div></button></div>
+            <div class="sev-cell"><button class="sev-btn" onclick="setSev(5,this)"><span class="sev-emoji">😭</span><div class="sev-label">劇烈</div></button></div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header"><div class="step-badge">4</div>備註（選填）</div>
+          <textarea class="note" id="noteIn" placeholder="例如：工作壓力大、睡眠不足..."></textarea>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn-clear" onclick="clearForm()">清除選擇</button>
+          <button class="btn-save" id="saveBtn" onclick="saveRecord()">儲存並同步 →</button>
+        </div>
+      </div>
+
+      <div class="records-col">
+        <div class="records-panel">
+          <div class="records-top">
+            <span class="records-title">頭痛紀錄一覽</span>
+            <div class="records-actions">
+              <button class="btn-export" onclick="exportCSV()">⬆ 匯出紀錄</button>
+              <button class="btn-stats" onclick="showStats()">📊 統計分析</button>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>日期時間</th><th>位置</th><th>強度</th><th>備註</th><th>操作</th></tr></thead>
+              <tbody id="tbody"></tbody>
+            </table>
+          </div>
+          <div class="pagination" id="pgn"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ── 穴位資料（已移除：頭頂、左右臉頰、下頷、左右眼眶 → 改為左右眼窩）──
+const POINTS = {
+  front:[
+    {id:'forehead_c', label:'前額中央', acupoint:'印堂穴', meridian:'督脈',           x:100, y:58,  color:'#5DCAA5'},
+    {id:'forehead_r', label:'右額頭',   acupoint:'陽白穴', meridian:'足少陽膽經',     x:68,  y:58,  color:'#9b8fc4'},
+    {id:'forehead_l', label:'左額頭',   acupoint:'陽白穴', meridian:'足少陽膽經',     x:132, y:58,  color:'#9b8fc4'},
+    {id:'eyepit_r',   label:'右眼窩',   acupoint:'睛明穴', meridian:'足太陽膀胱經',   x:72,  y:94,  color:'#9b8fc4'},
+    {id:'eyepit_l',   label:'左眼窩',   acupoint:'睛明穴', meridian:'足太陽膀胱經',   x:128, y:94,  color:'#9b8fc4'},
+    {id:'temple_r',   label:'右太陽穴', acupoint:'太陽穴', meridian:'足少陽膽經',     x:36,  y:106, color:'#c46a6a'},
+    {id:'temple_l',   label:'左太陽穴', acupoint:'太陽穴', meridian:'足少陽膽經',     x:164, y:106, color:'#c46a6a'},
+  ],
+  back:[
+    {id:'occiput',   label:'後腦',     acupoint:'腦戶穴', meridian:'督脈',           x:100, y:75,  color:'#5DCAA5'},
+    {id:'fengchi_r', label:'右風池穴', acupoint:'風池穴', meridian:'足少陽膽經',     x:64,  y:118, color:'#9b8fc4'},
+    {id:'fengchi_l', label:'左風池穴', acupoint:'風池穴', meridian:'足少陽膽經',     x:136, y:118, color:'#9b8fc4'},
+    {id:'neck_r',    label:'右後頸',   acupoint:'天柱穴', meridian:'足太陽膀胱經',   x:78,  y:162, color:'#6a9fc4'},
+    {id:'neck_l',    label:'左後頸',   acupoint:'天柱穴', meridian:'足太陽膀胱經',   x:122, y:162, color:'#6a9fc4'},
+    {id:'trap_r',    label:'右斜方肌', acupoint:'—',     meridian:'肌肉區域',        x:46,  y:212, color:'#c4946a'},
+    {id:'trap_l',    label:'左斜方肌', acupoint:'—',     meridian:'肌肉區域',        x:154, y:212, color:'#c4946a'},
+  ],
+  side:[
+    {id:'forehead_s', label:'前額',    acupoint:'陽白穴', meridian:'足少陽膽經',     x:70,  y:60,  color:'#5DCAA5'},
+    {id:'temple_s',   label:'太陽穴',  acupoint:'太陽穴', meridian:'足少陽膽經',     x:46,  y:104, color:'#c46a6a'},
+    {id:'eyepit_s',   label:'眼窩',    acupoint:'睛明穴', meridian:'足太陽膀胱經',   x:76,  y:98,  color:'#9b8fc4'},
+    {id:'occiput_s',  label:'後腦',    acupoint:'腦戶穴', meridian:'督脈',           x:162, y:84,  color:'#6a9fc4'},
+    {id:'ear_s',      label:'耳周',    acupoint:'翳風穴', meridian:'手少陽三焦經',   x:90,  y:132, color:'#c4946a'},
+    {id:'neck_s',     label:'後頸',    acupoint:'天柱穴', meridian:'足太陽膀胱經',   x:148, y:168, color:'#6a9fc4'},
+  ]
+};
+
+const HEAD_BG = {
+  front:`
+<ellipse cx="100" cy="122" rx="68" ry="92" fill="#f5e6d3" stroke="#c8a882" stroke-width="1.3"/>
+<path d="M56 56 Q100 30 144 56" fill="#c8956a"/>
+<ellipse cx="76" cy="100" rx="14" ry="10" fill="#eddfc7" stroke="#c8a882" stroke-width="0.8"/>
+<ellipse cx="124" cy="100" rx="14" ry="10" fill="#eddfc7" stroke="#c8a882" stroke-width="0.8"/>
+<path d="M66 80 Q78 74 90 80" fill="none" stroke="#b8956a" stroke-width="0.9" stroke-linecap="round"/>
+<path d="M110 80 Q122 74 134 80" fill="none" stroke="#b8956a" stroke-width="0.9" stroke-linecap="round"/>
+<path d="M80 142 Q100 160 120 142" fill="none" stroke="#c8a882" stroke-width="1.1" stroke-linecap="round"/>
+<ellipse cx="100" cy="165" rx="8" ry="5" fill="#eddfc7" stroke="#c8a882" stroke-width="0.6"/>`,
+  back:`
+<ellipse cx="100" cy="122" rx="68" ry="92" fill="#ede0cc" stroke="#c8a882" stroke-width="1.3"/>
+<path d="M56 56 Q100 30 144 56" fill="#c8956a"/>
+<path d="M100 38 Q102 58 100 78" fill="none" stroke="#c8a882" stroke-width="0.9" stroke-linecap="round"/>
+<path d="M74 202 Q100 217 126 202" fill="none" stroke="#b8956a" stroke-width="0.9" stroke-linecap="round"/>
+<path d="M38 198 Q58 228 78 240" fill="none" stroke="#c8a882" stroke-width="1.1" stroke-linecap="round"/>
+<path d="M162 198 Q142 228 122 240" fill="none" stroke="#c8a882" stroke-width="1.1" stroke-linecap="round"/>`,
+  side:`
+<ellipse cx="112" cy="122" rx="62" ry="90" fill="#f5e6d3" stroke="#c8a882" stroke-width="1.3"/>
+<path d="M70 56 Q112 30 150 52" fill="#c8956a"/>
+<path d="M150 52 Q157 67 152 84" fill="none" stroke="#c8a882" stroke-width="1.1"/>
+<path d="M70 96 Q66 124 70 150 Q73 170 78 182" fill="none" stroke="#c8a882" stroke-width="0.9"/>
+<ellipse cx="82" cy="134" rx="11" ry="14" fill="#f0dcc0" stroke="#c8a882" stroke-width="0.7"/>
+<path d="M78 164 Q85 174 82 184" fill="none" stroke="#c8a882" stroke-width="0.7"/>
+<path d="M112 210 Q130 230 148 225" fill="none" stroke="#c8a882" stroke-width="1.1" stroke-linecap="round"/>`
+};
+
+const DOT_COLORS=['#5DCAA5','#9b8fc4','#c46a6a','#c4946a','#6a9fc4','#3d7a34'];
+const SEV_EMOJI=['','😊','😐','😑','😣','😭'];
+const SEV_LABEL=['','無微','輕微','中等','嚴重','劇烈'];
+
+let curView='front', selected=new Set(), curSev=3;
+let records=JSON.parse(localStorage.getItem('yiguan_v4')||'[]');
+let curPage=1;
+const PER=6;
+
+// ── Settings ──────────────────────────────────────────────────────
+function loadSettings(){
+  document.getElementById('cfgScriptUrl').value=localStorage.getItem('yiguan_scriptUrl')||'';
+}
+function saveSettings(){
+  const url=document.getElementById('cfgScriptUrl').value.trim();
+  localStorage.setItem('yiguan_scriptUrl', url);
+  const el=document.getElementById('sStatus');
+  el.textContent='✓ 已儲存，重整也不消失';
+  el.className='s-status ok';
+  setTimeout(()=>{el.textContent='';el.className='s-status';},3000);
+}
+function getScriptUrl(){ return localStorage.getItem('yiguan_scriptUrl')||''; }
+
+// ── SVG ───────────────────────────────────────────────────────────
+function getPoint(id){ for(const pts of Object.values(POINTS)){const p=pts.find(x=>x.id===id);if(p)return p;} return null; }
+
+function renderSvg(){
+  const svg=document.getElementById('headSvg');
+  const pts=POINTS[curView];
+  let h=HEAD_BG[curView];
+  pts.forEach(p=>{
+    const sel=selected.has(p.id);
+    const r=sel?11:8;
+    const lx=p.x>105?p.x+14:p.x-14;
+    const anc=p.x>105?'start':'end';
+    const la=p.x>148?'start':p.x<52?'end':anc;
+    h+=`<g style="cursor:pointer" onclick="togglePoint('${p.id}')">
+<circle cx="${p.x}" cy="${p.y}" r="${r+5}" fill="transparent"/>
+${sel?`<circle cx="${p.x}" cy="${p.y}" r="${r+6}" fill="${p.color}" opacity="0.15"/>`:''}
+<circle cx="${p.x}" cy="${p.y}" r="${r}" fill="${p.color}" opacity="${sel?1:0.75}" stroke="${sel?'#fff':'none'}" stroke-width="${sel?2.5:0}" style="transition:all 0.12s"/>
+<text x="${p.x}" y="${p.y+3.5}" text-anchor="middle" font-size="7" fill="white" font-weight="500" pointer-events="none" font-family="sans-serif">${p.label.slice(0,2)}</text>
+</g>
+<g pointer-events="none">
+<line x1="${p.x}" y1="${p.y}" x2="${lx+(p.x>105?3:-3)}" y2="${p.y}" stroke="#c8a882" stroke-width="0.5" opacity="0.55"/>
+<text x="${lx+(p.x>105?5:-5)}" y="${p.y+3.5}" text-anchor="${la}" font-size="9" fill="#7a6a55" font-family="sans-serif">${p.label}</text>
+</g>`;
+  });
+  svg.innerHTML=h;
+}
+
+function togglePoint(id){ selected.has(id)?selected.delete(id):selected.add(id); renderSvg(); renderSelList(); }
+function switchView(v,el){ curView=v; document.querySelectorAll('.vtab').forEach(b=>b.classList.remove('active')); el.classList.add('active'); renderSvg(); }
+
+function renderSelList(){
+  const el=document.getElementById('selList');
+  if(selected.size===0){el.innerHTML='<div class="sel-empty">尚未選擇位置<br>可多選</div>';return;}
+  let h='';
+  selected.forEach(id=>{
+    const p=getPoint(id);if(!p)return;
+    h+=`<div class="sel-item"><div class="sel-item-body">
+<div class="sel-item-name" style="color:${p.color}">${p.label}</div>
+<div class="sel-item-meridian">對應筋絡：${p.meridian}</div>
+<div class="sel-item-acupoint">${p.acupoint}</div>
+</div><span class="sel-remove" onclick="togglePoint('${id}')">×</span></div>`;
+  });
+  el.innerHTML=h;
+}
+
+function setSev(n,el){ curSev=n; document.querySelectorAll('.sev-btn').forEach(b=>b.classList.remove('active')); el.classList.add('active'); }
+
+function clearForm(){
+  selected.clear(); renderSvg(); renderSelList();
+  document.getElementById('noteIn').value='';
+  document.querySelectorAll('.sev-btn').forEach((b,i)=>b.classList.toggle('active',i===2));
+  curSev=3;
+}
+
+// ── Save & Sync via Apps Script ───────────────────────────────────
+async function saveRecord(){
+  const date=document.getElementById('dateIn').value;
+  const time=document.getElementById('timeIn').value;
+  if(!date||!time){showToast('請選擇日期與時間','error');return;}
+  if(selected.size===0){showToast('請點選至少一個頭痛位置','error');return;}
+
+  const locs=[],meridians=[],acupoints=[];
+  selected.forEach(id=>{const p=getPoint(id);if(p){locs.push(p.label);meridians.push(p.meridian);acupoints.push(p.acupoint);}});
+
+  const rec={id:Date.now(),datetime:date+' '+time,locs,meridians,acupoints,sev:curSev,note:document.getElementById('noteIn').value.trim()};
+  records.unshift(rec);
+  localStorage.setItem('yiguan_v4',JSON.stringify(records));
+  curPage=1; renderTable();
+
+  const scriptUrl=getScriptUrl();
+  if(scriptUrl){
+    showToast('同步至試算表中...','info');
+    document.getElementById('saveBtn').disabled=true;
+    try{
+      // 用 no-cors fetch POST 到 Apps Script（Apps Script 會處理 CORS）
+      const payload={
+        datetime: rec.datetime,
+        locations: locs.join('、'),
+        meridians: meridians.join('、'),
+        acupoints: acupoints.join('、'),
+        severity: rec.sev,
+        severityLabel: SEV_LABEL[rec.sev],
+        note: rec.note,
+        timestamp: new Date().toLocaleString('zh-TW')
+      };
+      const res=await fetch(scriptUrl,{
+        method:'POST',
+        headers:{'Content-Type':'text/plain'},
+        body:JSON.stringify(payload)
+      });
+      const text=await res.text();
+      if(res.ok && (text.includes('success')||text.includes('OK')||text==='')){
+        showToast('✓ 已成功同步至 Google 試算表！','success');
+      }else{
+        showToast('✓ 紀錄已儲存（試算表同步可能需確認）','info');
+      }
+    }catch(e){
+      // fetch 若遇到 CORS preflight 失敗但實際已寫入的情況
+      showToast('✓ 紀錄已儲存，試算表請確認是否寫入','info');
+      console.log('Sync note:',e);
+    }
+    document.getElementById('saveBtn').disabled=false;
+  }else{
+    showToast('✓ 紀錄已儲存本地（設定 Apps Script 網址可同步試算表）','info');
+  }
+  clearForm();
+}
+
+// ── Table ─────────────────────────────────────────────────────────
+function renderTable(){
+  const tbody=document.getElementById('tbody');
+  const total=Math.max(1,Math.ceil(records.length/PER));
+  if(curPage>total)curPage=total;
+  const slice=records.slice((curPage-1)*PER,curPage*PER);
+  if(slice.length===0){tbody.innerHTML='<tr class="empty-row"><td colspan="5">尚無紀錄，新增後顯示於此</td></tr>';renderPgn(total);return;}
+  tbody.innerHTML=slice.map(r=>`<tr>
+<td style="white-space:nowrap;font-size:11px">${r.datetime}</td>
+<td><div class="loc-chips">${r.locs.map((l,i)=>`<span class="loc-chip"><span class="dot" style="background:${DOT_COLORS[i%DOT_COLORS.length]}"></span>${l}</span>`).join('')}</div></td>
+<td><span class="sev-face">${SEV_EMOJI[r.sev]||'—'}</span></td>
+<td class="note-cell" title="${r.note||''}">${r.note||'—'}</td>
+<td><button class="act-btn" onclick="delRecord(${r.id})">🗑</button></td>
+</tr>`).join('');
+  renderPgn(total);
+}
+function renderPgn(total){
+  const p=document.getElementById('pgn');
+  if(total<=1){p.innerHTML='';return;}
+  let h=`<button class="pg-btn" onclick="goPage(${curPage-1})">‹</button>`;
+  for(let i=1;i<=total;i++) h+=`<button class="pg-btn${i===curPage?' active':''}" onclick="goPage(${i})">${i}</button>`;
+  h+=`<button class="pg-btn" onclick="goPage(${curPage+1})">›</button>`;
+  p.innerHTML=h;
+}
+function goPage(n){const t=Math.ceil(records.length/PER);if(n<1||n>t)return;curPage=n;renderTable();}
+function delRecord(id){if(!confirm('確定要刪除這筆紀錄？'))return;records=records.filter(r=>r.id!==id);localStorage.setItem('yiguan_v4',JSON.stringify(records));renderTable();}
+
+// ── Export ────────────────────────────────────────────────────────
+function exportCSV(){
+  if(records.length===0){showToast('尚無紀錄可匯出','error');return;}
+  const hdr='日期時間,頭痛位置,對應筋絡,對應穴位,強度,強度說明,備註';
+  const rows=records.map(r=>[r.datetime,'"'+r.locs.join('、')+'"','"'+r.meridians.join('、')+'"','"'+r.acupoints.join('、')+'"',r.sev,SEV_LABEL[r.sev],'"'+(r.note||'')+'"'].join(',')).join('\n');
+  const blob=new Blob(['\ufeff'+hdr+'\n'+rows],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='頭痛紀錄_'+new Date().toISOString().slice(0,10)+'.csv';a.click();
+  showToast('✓ CSV 匯出成功！','success');
+}
+function showStats(){
+  if(records.length===0){showToast('尚無紀錄可分析','error');return;}
+  const freq={};
+  records.forEach(r=>r.locs.forEach(l=>{freq[l]=(freq[l]||0)+1;}));
+  const top=Object.entries(freq).sort((a,b)=>b[1]-a[1]).slice(0,3);
+  const avg=(records.reduce((s,r)=>s+r.sev,0)/records.length).toFixed(1);
+  showToast(`共 ${records.length} 筆 · 平均強度 ${avg} · 最常見：${top.map(x=>x[0]).join('、')}`, 'info');
+}
+
+// ── Help ──────────────────────────────────────────────────────────
+function showHelp(){
+  alert(`📋 Google Apps Script 設定步驟：
+
+1. 開啟你的 Google 試算表
+2. 點選上方選單「擴充功能」→「Apps Script」
+3. 刪除原有內容，貼上以下程式碼：
+
+──────────────────────────────
+function doPost(e) {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  var data = JSON.parse(e.postData.contents);
+  sheet.appendRow([
+    data.datetime,
+    data.locations,
+    data.meridians,
+    data.acupoints,
+    data.severity,
+    data.severityLabel,
+    data.note,
+    data.timestamp
+  ]);
+  return ContentService.createTextOutput('OK');
+}
+──────────────────────────────
+
+4. 點選「部署」→「新增部署作業」
+5. 類型選「網頁應用程式」
+6. 執行身份：「我」
+   誰可以存取：「所有人」
+7. 點「部署」→ 複製「網頁應用程式網址」
+8. 貼到左側「Apps Script 網址」欄位並儲存`);
+}
+
+// ── Toast ─────────────────────────────────────────────────────────
+function showToast(msg,type='info'){
+  const el=document.getElementById('toast');
+  el.textContent=msg; el.className=`toast show ${type}`;
+  clearTimeout(el._t); el._t=setTimeout(()=>{el.className='toast';},4500);
+}
+
+// ── Init ──────────────────────────────────────────────────────────
+const now=new Date();
+document.getElementById('dateIn').value=now.toISOString().slice(0,10);
+document.getElementById('timeIn').value=now.toTimeString().slice(0,5);
+loadSettings();
+renderSvg();
+renderSelList();
+renderTable();
+</script>
+</body>
+</html>
